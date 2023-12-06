@@ -1,0 +1,30 @@
+﻿<Page x:Class="Chess.Menu"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Chess"
+      mc:Ignorable="d" 
+      d:DesignHeight="1080" d:DesignWidth="1920"
+      Title="Page1">
+
+    <StackPanel Background="#222224" Orientation="Vertical">
+        <Label Content="EPIC CHESS" Width="900" Height="200" Margin="0, 50, 0, 0" Foreground="White" FontSize="150" HorizontalContentAlignment="Center" FontFamily="Times New Roman"></Label>
+        
+        <Button x:Name="PlayerVsPlayerButton" Click="PlayerVsPlayer_Click"  Content="Player vs Player" Foreground="White" FontSize="40" Width="600" Height="150" HorizontalAlignment="Center" Margin="100">
+            <Button.Background>
+                <SolidColorBrush Color="Black" Opacity="0.4"/>
+            </Button.Background>
+        </Button>
+        
+        <Button x:Name="PlayerVsMachineButton" Click="PlayerVsMachine_Click" Content="Player vs Machine" Foreground="White" FontSize="40" Width="600" Height="150" HorizontalAlignment="Center" >
+            <Button.Background>
+                <SolidColorBrush Color="Black" Opacity="0.4"/>
+            </Button.Background>
+        </Button>
+
+        <Border x:Name="Footer" VerticalAlignment="Center" Height="50">
+            
+        </Border>
+    </StackPanel>
+</Page>
