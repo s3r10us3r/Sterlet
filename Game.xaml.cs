@@ -15,8 +15,11 @@ namespace Chess
         {
             InitializeComponent();
 
+            Timer timerWhite = new Timer(180, 1, whiteTimer);
+            Timer timerBlack = new Timer(180, 1, blackTimer);
+
             Logic.Board.ReadFEN(FEN);
-            chessBoard = new ChessBoard(whitePlayerType, blackPlayerType);
+            chessBoard = new ChessBoard(whitePlayerType, blackPlayerType, timerWhite, timerBlack);
             chessBoardBorder.Child = chessBoard;
 
             if (whitePlayerType == blackPlayerType && whitePlayerType == PlayerType.HUMAN_PLAYER)

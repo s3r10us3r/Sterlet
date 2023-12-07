@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -26,11 +27,17 @@ namespace Chess.gui
         private PlayerType whitePlayerType;
         private PlayerType blackPlayerType;
 
+        private Timer whiteTimer;
+        private Timer blackTimer;
+
         private uint[] boardRepresentation = (uint[])Logic.Board.board.Clone();
-        public ChessBoard(PlayerType whitePlayerType, PlayerType blackPlayerType) : base()
+        public ChessBoard(PlayerType whitePlayerType, PlayerType blackPlayerType, Timer whiteTimer, Timer blackTimer) : base()
         {
             this.whitePlayerType = whitePlayerType;
             this.blackPlayerType = blackPlayerType;
+
+            this.whiteTimer = whiteTimer;
+            this.blackTimer = blackTimer;
 
             for (int i = 0; i < 8; i++)
             {
@@ -209,6 +216,17 @@ namespace Chess.gui
             {
                 Thread.Sleep(100);
                 Invert();
+            }
+
+            if(Logic.Board.toMove == Logic.Piece.WHITE)
+            {
+                blackTimer.Stop();
+                whiteTimer.Start();
+            }
+            else
+            {
+                whiteTimer.Stop();
+                blackTimer.Start();
             }
 
             moves = Logic.MoveGenerator.GenerateMoves();

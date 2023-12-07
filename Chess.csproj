@@ -76,6 +76,7 @@
     </Compile>
     <Compile Include="gui\PlayerType.cs" />
     <Compile Include="gui\PromotionMenu.cs" />
+    <Compile Include="gui\Timer.cs" />
     <Compile Include="Logic\AttackMapper.cs" />
     <Compile Include="Logic\Board.cs" />
     <Compile Include="Logic\Move.cs" />
