@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Chess.Logic
 {
@@ -163,9 +159,9 @@ namespace Chess.Logic
 
         private void printBitBoard(ulong bitBoard)
         {
-            for(int i = 7; i >= 0; i--)
+            for (int i = 7; i >= 0; i--)
             {
-                for(int j = 0; j <8; j++)
+                for (int j = 0; j < 8; j++)
                 {
                     ulong bit = 1UL << i * 8 + j;
                     if ((bit & bitBoard) != 0)

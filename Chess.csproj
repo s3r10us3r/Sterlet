@@ -124,7 +124,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Resource Include="Resources\chess_pieces\black_bishop.png" />
     <Resource Include="Resources\chess_pieces\black_king.png" />
@@ -138,6 +137,9 @@
     <Resource Include="Resources\chess_pieces\white_pawn.png" />
     <Resource Include="Resources\chess_pieces\white_queen.png" />
     <Resource Include="Resources\chess_pieces\white_rook.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\guiImages\rotate_icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

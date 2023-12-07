@@ -1,4 +1,6 @@
-﻿using System.Windows.Controls;
+﻿using Chess.gui;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace Chess
 {
@@ -7,10 +9,23 @@ namespace Chess
     /// </summary>
     public partial class Game : Page
     {
-        public Game(string FEN)
+        private readonly ChessBoard chessBoard;
+
+        public Game(string FEN, PlayerType whitePlayerType, PlayerType blackPlayerType)
         {
-            Logic.Board.ReadFEN(FEN);
             InitializeComponent();
+
+            Logic.Board.ReadFEN(FEN);
+            chessBoard = new ChessBoard(whitePlayerType, blackPlayerType);
+            chessBoardBorder.Child = chessBoard;
+
+            if (whitePlayerType == blackPlayerType && whitePlayerType == PlayerType.HUMAN_PLAYER)
+                rotateButton.Visibility = Visibility.Collapsed;
+        }
+
+        private void RotateClick(object sender, RoutedEventArgs e)
+        {
+            chessBoard.Invert();
         }
     }
 }

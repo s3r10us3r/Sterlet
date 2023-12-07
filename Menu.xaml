@@ -9,7 +9,7 @@
       Title="Page1">
 
     <StackPanel Background="#222224" Orientation="Vertical">
-        <Label Content="EPIC CHESS" Width="900" Height="200" Margin="0, 50, 0, 0" Foreground="White" FontSize="150" HorizontalContentAlignment="Center" FontFamily="Times New Roman"></Label>
+        <Label Content="STERLET" Width="900" Height="200" Margin="0, 50, 0, 0" Foreground="White" FontSize="150" HorizontalContentAlignment="Center" FontFamily="Times New Roman"></Label>
         
         <Button x:Name="PlayerVsPlayerButton" Click="PlayerVsPlayer_Click"  Content="Player vs Player" Foreground="White" FontSize="40" Width="600" Height="150" HorizontalAlignment="Center" Margin="100">
             <Button.Background>

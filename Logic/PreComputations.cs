@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Chess.Logic
+﻿namespace Chess.Logic
 {
     static class PreComputations
     {
@@ -19,11 +17,11 @@ namespace Chess.Logic
         private static void GenerateKnightMoves()
         {
             KnightMoves = new ulong[64];
-            for(int i = 0; i < 64; i++)
+            for (int i = 0; i < 64; i++)
             {
                 ulong allMoves = 0;
-              
-                if(i / 8 < 6)
+
+                if (i / 8 < 6)
                 {
                     if (i % 8 < 7)
                     {
@@ -35,7 +33,7 @@ namespace Chess.Logic
                     }
                 }
 
-                if(i / 8 > 1)
+                if (i / 8 > 1)
                 {
                     if (i % 8 < 7)
                     {
@@ -46,7 +44,7 @@ namespace Chess.Logic
                         allMoves |= 1UL << (i + S + S + W);
                     }
                 }
-                if(i % 8 < 6)
+                if (i % 8 < 6)
                 {
                     if (i / 8 < 7)
                     {
@@ -57,7 +55,7 @@ namespace Chess.Logic
                         allMoves |= 1UL << (i + E + E + S);
                     }
                 }
-                if( i % 8 > 1)
+                if (i % 8 > 1)
                 {
                     if (i / 8 < 7)
                     {
@@ -76,69 +74,69 @@ namespace Chess.Logic
         private static void GenerateSliderMoves()
         {
             SliderMoves = new ulong[64];
-            for(int i = 0; i < 64; i++)
+            for (int i = 0; i < 64; i++)
             {
                 ulong allMoves = 0;
-                
-                
+
+
                 int j = i + N;
-                while(j < 64)
+                while (j < 64)
                 {
                     allMoves |= 1UL << j;
                     j += N;
                 }
-                
+
                 j = i + S;
-                while(j >= 0)
+                while (j >= 0)
                 {
                     allMoves |= 1UL << j;
                     j += S;
                 }
 
                 j = i + E;
-                while(j % 8 != 0)
+                while (j % 8 != 0)
                 {
                     allMoves |= 1UL << j;
                     j += E;
                 }
 
                 j = i + W;
-                while(j % 8 != 7 && j >= 0)
+                while (j % 8 != 7 && j >= 0)
                 {
                     allMoves |= 1UL << j;
                     j += W;
                 }
 
                 j = i + N + E;
-                while(j % 8 != 0 && j < 64)
+                while (j % 8 != 0 && j < 64)
                 {
                     allMoves |= 1UL << j;
                     j += N + E;
                 }
 
                 j = i + N + W;
-                while(j % 8 != 7 && j < 64)
+                while (j % 8 != 7 && j < 64)
                 {
                     allMoves |= 1UL << j;
                     j += N + W;
                 }
 
                 j = i + S + E;
-                while(j % 8 != 0 && j >= 0)
+                while (j % 8 != 0 && j >= 0)
                 {
                     allMoves |= 1UL << j;
                     j += S + E;
                 }
 
                 j = i + S + W;
-                while(j % 8 != 7 && j >= 0)
+                while (j % 8 != 7 && j >= 0)
                 {
                     allMoves |= 1UL << j;
                     j += S + W;
                 }
                 SliderMoves[i] = allMoves;
             }
-            
+
         }
 
 
@@ -146,19 +144,19 @@ namespace Chess.Logic
         {
             KingMoves = new ulong[64];
 
-            for(int i = 0; i < 64; i++)
+            for (int i = 0; i < 64; i++)
             {
                 ulong allKingMoves = 0;
-                if(i / 8 < 7)
+                if (i / 8 < 7)
                 {
                     allKingMoves |= 1UL << (i + N);
 
-                    if(i % 8 > 0)
+                    if (i % 8 > 0)
                     {
                         allKingMoves |= 1UL << (i + N + W);
                     }
 
-                    if(i % 8 < 7)
+                    if (i % 8 < 7)
                     {
                         allKingMoves |= 1UL << (i + N + E);
                     }
@@ -184,7 +182,7 @@ namespace Chess.Logic
                     allKingMoves |= 1UL << (i + W);
                 }
 
-                if(i % 8 < 7)
+                if (i % 8 < 7)
                 {
                     allKingMoves |= 1UL << (i + E);
                 }

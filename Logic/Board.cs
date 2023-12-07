@@ -16,9 +16,9 @@ namespace Chess.Logic
         public static readonly uint blackQueensideCastleMask = 0b1000;
         public static readonly uint enPassantMask = 0b11110000;
         public static readonly uint capturedPieceMask = 0b11111100000000;
-        public static readonly uint moveCounterMask =  ~0b11111111111111u;
+        public static readonly uint moveCounterMask = ~0b11111111111111u;
 
-        public static uint[] board = 
+        public static uint[] board =
             {
                Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE,
                Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE, Piece.NONE,
@@ -49,7 +49,7 @@ namespace Chess.Logic
         public static PieceList whitePieces;
         public static PieceList blackPieces;
 
-        
+
 
         //this holds a single bit in a 64 bit number indicating king's position
         public static ulong whiteKingPosition;
@@ -100,7 +100,7 @@ namespace Chess.Logic
             PieceList pieceList;
             PieceList enemyPieceList;
 
-            if(color == Piece.WHITE)
+            if (color == Piece.WHITE)
             {
                 pieceList = whitePieces;
                 enemyPieceList = blackPieces;
@@ -124,16 +124,16 @@ namespace Chess.Logic
             {
                 case Move.Flag.None:
                     pieceList.MovePieceToField(start, target, pieceType);
-                    if(board[target] != Piece.NONE)
+                    if (board[target] != Piece.NONE)
                     {
                         uint enemyPiece = board[target];
                         enemyPieceList.RemovePieceAtField(target, Piece.GetPiece(enemyPiece));
                         newGameState |= enemyPiece << 8;
                         captureWasMade = true;
                     }
-                    if(pieceType == Piece.KING)
+                    if (pieceType == Piece.KING)
                     {
-                        if(color == Piece.WHITE)
+                        if (color == Piece.WHITE)
                         {
                             newGameState &= ~whiteKingsideCastleMask;
                             newGameState &= ~whiteQueensideCastleMask;
@@ -144,19 +144,19 @@ namespace Chess.Logic
                             newGameState &= ~blackQueensideCastleMask;
                         }
                     }
-                    if(start == 0 || target == 0)
+                    if (start == 0 || target == 0)
                     {
                         newGameState &= ~whiteQueensideCastleMask;
                     }
-                    if(start == 7 || target == 7)
+                    if (start == 7 || target == 7)
                     {
                         newGameState &= ~whiteKingsideCastleMask;
                     }
-                    if(start == 56 || target == 56)
+                    if (start == 56 || target == 56)
                     {
                         newGameState &= ~blackQueensideCastleMask;
                     }
-                    if(start == 63 || target == 63)
+                    if (start == 63 || target == 63)
                     {
                         newGameState &= ~blackKingsideCastleMask;
                     }
@@ -168,7 +168,7 @@ namespace Chess.Logic
                     pieceList.MovePieceToField(start, target, pieceType);
                     uint enPassantFile = (uint)target % 8;
                     newGameState |= (enPassantFile + 1) << 4;
-                   
+
                     board[start] = Piece.NONE;
                     board[target] = piece;
                     break;
@@ -381,11 +381,11 @@ namespace Chess.Logic
                 pieces.MovePieceToField(target, start, pieceType);
                 board[start] = piece;
             }
-            else if(moveFlag == Move.Flag.Castling)
+            else if (moveFlag == Move.Flag.Castling)
             {
                 int startRookSquare;
                 int targetRookSquare;
-                if(target > start)
+                if (target > start)
                 {
                     startRookSquare = target + 1;
                     targetRookSquare = start + 1;
@@ -403,7 +403,7 @@ namespace Chess.Logic
                 board[targetRookSquare] = Piece.NONE;
                 board[startRookSquare] = rook;
             }
-            else if(moveFlag == Move.Flag.EnPassantCapture)
+            else if (moveFlag == Move.Flag.EnPassantCapture)
             {
                 int rankDelta = color == Piece.WHITE ? -8 : 8;
                 int capturedPawnSquare = target + rankDelta;
@@ -442,7 +442,7 @@ namespace Chess.Logic
         {
             int i = 56;
 
-            foreach(string row in rows)
+            foreach (string row in rows)
             {
                 foreach (char c in row)
                 {
@@ -457,7 +457,7 @@ namespace Chess.Logic
                         i++;
                     }
                 }
-                
+
                 i -= 16;
             }
         }
@@ -513,7 +513,7 @@ namespace Chess.Logic
 
         private static uint CharToPiece(char piece)
         {
-           uint color = char.IsUpper(piece) ? Piece.WHITE : Piece.BLACK;
+            uint color = char.IsUpper(piece) ? Piece.WHITE : Piece.BLACK;
 
             piece = char.ToLower(piece);
             uint pieceValue;

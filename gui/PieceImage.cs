@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Chess.Logic;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
@@ -7,14 +8,13 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Chess.Logic;
 
 namespace Chess.gui
 {
     public class PieceImage : Image
     {
 
-        private static readonly string[] TYPE_STRINGS = {null, "pawn", "bishop", "knight", "rook", "queen", "king"};
+        private static readonly string[] TYPE_STRINGS = { null, "pawn", "bishop", "knight", "rook", "queen", "king" };
 
         private readonly string CHESS_PIECES_PATH = @"\Resources\chess_pieces\";
 
@@ -45,7 +45,7 @@ namespace Chess.gui
             BitmapImage bitmap = new BitmapImage();
             bitmap.BeginInit();
             string image_path = CHESS_PIECES_PATH + colorString + "_" + pieceString + ".png";
-        
+
             bitmap.UriSource = new Uri(image_path, UriKind.Relative);
             bitmap.EndInit();
             this.Source = bitmap;
@@ -73,11 +73,11 @@ namespace Chess.gui
         }
 
         private void PlayerControlledPiece_PreviewMouseDown(object sender, MouseButtonEventArgs e)
-        {  
+        {
             if (e.ChangedButton == MouseButton.Left && !PromotionMenu.isOpened)
             {
                 uint color = Piece.GetColor(piece);
-                
+
                 availableMoves = GetAvailableMoves();
                 isDragging = true;
 
@@ -126,9 +126,9 @@ namespace Chess.gui
                 Console.WriteLine($"CURRENT FIELD {field} NEW FIELD {newField}");
 
                 List<Move> movesThatCouldBeMade = new List<Move>();
-                foreach(Move move in availableMoves)
+                foreach (Move move in availableMoves)
                 {
-                    if(move.TargetSquare == newField)
+                    if (move.TargetSquare == newField)
                     {
                         movesThatCouldBeMade.Add(move);
                     }
@@ -160,9 +160,9 @@ namespace Chess.gui
                             promotionFlag = Move.Flag.PromoteToKnight;
                             break;
                     }
-                    foreach(Move move in movesThatCouldBeMade)
+                    foreach (Move move in movesThatCouldBeMade)
                     {
-                        if(move.MoveFlag == promotionFlag)
+                        if (move.MoveFlag == promotionFlag)
                         {
                             Board.MakeMove(move);
                             parent.UpdateBoard();
@@ -170,17 +170,17 @@ namespace Chess.gui
                         }
                     }
                 }
-                
+
             }
         }
-        
+
         private List<Move> GetAvailableMoves()
         {
             List<Move> availableMoves = new List<Move>();
-            
-            foreach(Move move in parent.moves)
+
+            foreach (Move move in parent.moves)
             {
-                if(move.StartSquare == field)
+                if (move.StartSquare == field)
                 {
                     availableMoves.Add(move);
                 }
@@ -188,11 +188,11 @@ namespace Chess.gui
 
             return availableMoves;
         }
-        
+
         private List<int> GetFieldsToHighlight()
         {
             List<int> fieldsToHighlight = new List<int>();
-            foreach(Move move in availableMoves)
+            foreach (Move move in availableMoves)
             {
                 fieldsToHighlight.Add(move.TargetSquare);
             }
@@ -214,7 +214,7 @@ namespace Chess.gui
                 tcs.SetResult(chosenPiece);
             };
 
-   
+
             promotionMenu.IsOpen = true;
 
             uint result = await tcs.Task;

@@ -1,27 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 
-namespace Chess.gui{
+namespace Chess.gui
+{
     public class ChessBoard : Grid
     {
 
         public const int FIELDSIZE = 75;
+
+        private static bool isInverted = false;
         private readonly SolidColorBrush WHITE_FIELDS_COLOR = Brushes.Wheat;
         private readonly SolidColorBrush BLACK_FIELDS_COLOR = Brushes.DarkGreen;
         private readonly SolidColorBrush WHITE_HIGHLITED_COLOR = new SolidColorBrush(Color.FromRgb(255, 200, 150));
         private readonly SolidColorBrush BLACK_HIGHLITED_COLOR = new SolidColorBrush(Color.FromRgb(100, 100, 00));
-        private PieceImage[] boardArray = new PieceImage[120];
+        
+        private PieceImage[] boardArray = new PieceImage[64];
         private Border[,] fieldArray = new Border[8, 8];
         public List<Logic.Move> moves;
+        private PlayerType whitePlayerType;
+        private PlayerType blackPlayerType;
 
-        private uint[] boardRepresentation =(uint[])Logic.Board.board.Clone();
-        public ChessBoard() : base()
+        private uint[] boardRepresentation = (uint[])Logic.Board.board.Clone();
+        public ChessBoard(PlayerType whitePlayerType, PlayerType blackPlayerType) : base()
         {
+            this.whitePlayerType = whitePlayerType;
+            this.blackPlayerType = blackPlayerType;
 
             for (int i = 0; i < 8; i++)
             {
@@ -41,6 +50,21 @@ namespace Chess.gui{
             this.VerticalAlignment = VerticalAlignment.Center;
 
             SetUpFromBoard();
+        }
+
+        public void Invert()
+        {
+            isInverted = !isInverted;
+            foreach (PieceImage pieceImage in boardArray)
+            {
+                if (pieceImage != null)
+                {
+                    int newRow, newCol;
+                    (newRow, newCol) = FieldToRowCol(pieceImage.field);
+                    SetRow(pieceImage, newRow);
+                    SetColumn(pieceImage, newCol);
+                }
+            }
         }
 
         private void AddRow()
@@ -66,11 +90,11 @@ namespace Chess.gui{
             SetRow(field, row);
             SetColumn(field, col);
             this.Children.Add(field);
-            fieldArray[row, col] = field; 
+            fieldArray[row, col] = field;
         }
         private void SetUpFromBoard()
         {
-            for(int i = 0; i < 64; i++)
+            for (int i = 0; i < 64; i++)
             {
                 if (Logic.Board.board[i] != Logic.Piece.NONE && Logic.Board.board[i] != Logic.Piece.WALL)
                 {
@@ -118,21 +142,33 @@ namespace Chess.gui{
 
         public static int RowColToFieldNumber(int row, int col)
         {
+            if (isInverted)
+            {
+                return 63 - ((7 - row) * 8 + col);
+            }
             return (7 - row) * 8 + col;
         }
 
         public static (int, int) FieldToRowCol(int field)
-        { 
-            int row = 7 - field / 8;
-            int col = field % 8;
-
+        {
+            int row, col;
+            if (isInverted)
+            {
+                row = field / 8;
+                col = 7 - (field % 8);
+            }
+            else
+            {
+                row = 7 - field / 8;
+                col = field % 8;
+            }
             return (row, col);
         }
 
         public void HighlightFields(List<int> fields)
         {
             int row, col;
-            foreach(int field in fields)
+            foreach (int field in fields)
             {
                 (row, col) = FieldToRowCol(field);
                 SolidColorBrush highlightedColor = (row + col) % 2 == 0 ? WHITE_HIGHLITED_COLOR : BLACK_HIGHLITED_COLOR;
@@ -168,6 +204,13 @@ namespace Chess.gui{
                     boardRepresentation[i] = Logic.Board.board[i];
                 }
             }
+
+            if(whitePlayerType == blackPlayerType && whitePlayerType == PlayerType.HUMAN_PLAYER)
+            {
+                Thread.Sleep(100);
+                Invert();
+            }
+
             moves = Logic.MoveGenerator.GenerateMoves();
         }
 
@@ -178,7 +221,7 @@ namespace Chess.gui{
 
         public void WhiteWin()
         {
-            EndPopup("WHITE WON!", Color.FromRgb(255, 255, 255), Color.FromRgb(0, 0, 0), Color.FromRgb(0, 0, 0)); 
+            EndPopup("WHITE WON!", Color.FromRgb(255, 255, 255), Color.FromRgb(0, 0, 0), Color.FromRgb(0, 0, 0));
         }
 
         public void Draw()

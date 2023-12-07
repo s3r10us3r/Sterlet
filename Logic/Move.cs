@@ -1,8 +1,4 @@
-﻿using Chess.gui;
-using System.Collections.Generic;
-
-
-namespace Chess.Logic
+﻿namespace Chess.Logic
 {
 
     //move is a ushort
@@ -26,7 +22,7 @@ namespace Chess.Logic
         const ushort targetSquareMask = 0b0000111111000000;
         const ushort flagMask = 0b1111000000000000;
 
-        
+
 
         public Move(int startSquare, int targetSquare)
         {
@@ -34,26 +30,29 @@ namespace Chess.Logic
         }
         public Move(int startSquare, int targetSquare, int flag)
         {
-            value |= (ushort) (startSquare | targetSquare << 6 | flag << 12);
+            value |= (ushort)(startSquare | targetSquare << 6 | flag << 12);
         }
 
-        public int StartSquare 
+        public int StartSquare
         {
-            get {
+            get
+            {
                 return value & startSquareMask;
             }
         }
 
-        public int TargetSquare 
+        public int TargetSquare
         {
-            get {
+            get
+            {
                 return (value & targetSquareMask) >> 6;
             }
         }
 
         public int MoveFlag
         {
-            get {
+            get
+            {
                 return (value & flagMask) >> 12;
             }
         }
@@ -70,5 +69,5 @@ namespace Chess.Logic
             char targetFile = (char)('a' + targetCol);
             return startFile.ToString() + startRow.ToString() + targetFile.ToString() + targetRow.ToString();
         }
-    }    
+    }
 }

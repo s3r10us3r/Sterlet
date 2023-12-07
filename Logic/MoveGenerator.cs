@@ -1,6 +1,5 @@
-﻿using System;
+﻿using Chess.BitMagic;
 using System.Collections.Generic;
-using Chess.BitMagic;
 
 namespace Chess.Logic
 {
@@ -99,7 +98,7 @@ namespace Chess.Logic
                 ulong allAttackers = diagonallAttackers | orthogonalAttackers | knightAttackers | pawnAttackers;
                 int attackersNum = BitMagician.CountBits(allAttackers);
 
-                if(attackersNum > 1)
+                if (attackersNum > 1)
                 {
                     return GenerateDoubleCheckMoves(kingField);
                 }
@@ -184,7 +183,7 @@ namespace Chess.Logic
             }
             else
             {
-               possibleFields &= (AttackMapper.NESWSliderAttacks & kingSW & ~pieces.allPieces) | attacker;
+                possibleFields &= (AttackMapper.NESWSliderAttacks & kingSW & ~pieces.allPieces) | attacker;
             }
 
             return GenerateUnCheckedMoves();
@@ -229,7 +228,7 @@ namespace Chess.Logic
                     int doubleMove = field + 2 * pawnDirection;
                     ulong doubleMoveBitboard = 1UL << doubleMove;
 
-                    if ((doubleMoveBitboard & (pieces.allPieces | enemyPieces.allPieces) ) == 0 && (doubleMoveBitboard & possibleFields) != 0)
+                    if ((doubleMoveBitboard & (pieces.allPieces | enemyPieces.allPieces)) == 0 && (doubleMoveBitboard & possibleFields) != 0)
                     {
                         moveList.Add(new Move(field, doubleMove, Move.Flag.PawnTwoForward));
                     }
@@ -405,9 +404,9 @@ namespace Chess.Logic
                 i = field + 9;
                 iBit = (fieldBit & HFileMask) << 9;
                 iBit &= allyMask;
-                while(iBit != 0)
+                while (iBit != 0)
                 {
-                    if((iBit & possibleFields) != 0)
+                    if ((iBit & possibleFields) != 0)
                         moveList.Add(new Move(field, i));
                     iBit &= eMask;
                     i += 9;
@@ -419,7 +418,7 @@ namespace Chess.Logic
                 i = field - 9;
                 iBit = (fieldBit & AFileMask) >> 9;
                 iBit &= allyMask;
-                while(iBit != 0)
+                while (iBit != 0)
                 {
                     if ((iBit & possibleFields) != 0)
                         moveList.Add(new Move(field, i));
@@ -436,7 +435,7 @@ namespace Chess.Logic
                 i = field + 7;
                 iBit = (fieldBit & AFileMask) << 7;
                 iBit &= allyMask;
-                while(iBit != 0)
+                while (iBit != 0)
                 {
                     if ((iBit & possibleFields) != 0)
                         moveList.Add(new Move(field, i));
@@ -450,7 +449,7 @@ namespace Chess.Logic
                 i = field - 7;
                 iBit = (fieldBit & HFileMask) >> 7;
                 iBit &= allyMask;
-                while(iBit != 0)
+                while (iBit != 0)
                 {
                     if ((iBit & possibleFields) != 0)
                         moveList.Add(new Move(field, i));
@@ -467,23 +466,23 @@ namespace Chess.Logic
         {
             ulong moveMap = PreComputations.KingMoves[field] & ~(pieces.allPieces | enemyAttackMap);
             ulong bitPointer = 1UL;
-            for(int i = 0; i < 64; i++)
+            for (int i = 0; i < 64; i++)
             {
-                if((moveMap & bitPointer) != 0)
+                if ((moveMap & bitPointer) != 0)
                 {
                     moveList.Add(new Move(field, i));
                 }
                 bitPointer <<= 1;
             }
-            
+
             if (Board.toMove == Piece.WHITE)
             {
-                if ((Board.currentGameState & Board.whiteKingsideCastleMask) != 0 && (enemyAttackMap & (whiteKingsideCastleFields | pieces.kingPosition )) == 0 && ((pieces.allPieces | enemyPieces.allPieces) & whiteKingsideCastleFields) == 0)
+                if ((Board.currentGameState & Board.whiteKingsideCastleMask) != 0 && (enemyAttackMap & (whiteKingsideCastleFields | pieces.kingPosition)) == 0 && ((pieces.allPieces | enemyPieces.allPieces) & whiteKingsideCastleFields) == 0)
                 {
                     Move move = new Move(field, field + 2 * E, Move.Flag.Castling);
                     moveList.Add(move);
                 }
-                if((Board.currentGameState & Board.whiteQueensideCastleMask) != 0 && (enemyAttackMap & (whiteQueensideCastleFields | pieces.kingPosition)) == 0 && ((pieces.allPieces | enemyPieces.allPieces) & (whiteQueensideCastleFields + 2)) == 0)
+                if ((Board.currentGameState & Board.whiteQueensideCastleMask) != 0 && (enemyAttackMap & (whiteQueensideCastleFields | pieces.kingPosition)) == 0 && ((pieces.allPieces | enemyPieces.allPieces) & (whiteQueensideCastleFields + 2)) == 0)
                 {
                     Move move = new Move(field, field + 2 * W, Move.Flag.Castling);
                     moveList.Add(move);
@@ -594,7 +593,7 @@ namespace Chess.Logic
             result |= AttackMapper.MapSSliderAttacks(fieldBit);
             result |= AttackMapper.MapESliderAttacks(fieldBit);
             result |= AttackMapper.MapWSliderAttacks(fieldBit);
-           
+
             return result & orthogonals;
         }
 
@@ -612,7 +611,7 @@ namespace Chess.Logic
 
         public static bool EnPassantTest(int field, int enPassantField)
         {
-            int leftField = enPassantField < field ? enPassantField -1 : field - 1;
+            int leftField = enPassantField < field ? enPassantField - 1 : field - 1;
             int rightField = enPassantField > field ? enPassantField + 1 : field + 1;
 
             ulong leftSideBit = 1UL << leftField;
@@ -620,7 +619,7 @@ namespace Chess.Logic
 
             ulong allPieces = enemyPieces.allPieces | pieces.allPieces;
 
-            while(true)
+            while (true)
             {
                 if (leftField % 8 == 7)
                 {
@@ -633,13 +632,13 @@ namespace Chess.Logic
                 leftField--;
                 leftSideBit >>= 1;
             }
-            while(true)
+            while (true)
             {
                 if (rightField % 8 == 0)
                 {
                     return true;
                 }
-                if((rightSideBit & allPieces) != 0)
+                if ((rightSideBit & allPieces) != 0)
                 {
                     break;
                 }
@@ -647,7 +646,7 @@ namespace Chess.Logic
                 rightSideBit <<= 1;
             }
 
-            return ((leftSideBit & pieces.kingPosition ) == 0 || (rightSideBit & enemyPieces.orthogonalSliders ) == 0) && ((rightSideBit & pieces.kingPosition) == 0 || (leftSideBit & enemyPieces.orthogonalSliders) == 0);
+            return ((leftSideBit & pieces.kingPosition) == 0 || (rightSideBit & enemyPieces.orthogonalSliders) == 0) && ((rightSideBit & pieces.kingPosition) == 0 || (leftSideBit & enemyPieces.orthogonalSliders) == 0);
         }
     }
 }

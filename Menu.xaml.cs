@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using Chess.gui;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace Chess
@@ -18,7 +19,7 @@ namespace Chess
 
         private void PlayerVsPlayer_Click(object sender, RoutedEventArgs e)
         {
-            mainWindow.ChangePage(new Game(Logic.Board.STARTING_POSITION));
+            mainWindow.ChangePage(new Game(Logic.Board.STARTING_POSITION, PlayerType.HUMAN_PLAYER, PlayerType.HUMAN_PLAYER));
         }
 
         private void PlayerVsMachine_Click(object sender, RoutedEventArgs e)

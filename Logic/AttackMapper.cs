@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Chess.Logic
 {
@@ -60,7 +59,7 @@ namespace Chess.Logic
         public static void MapPawnAttacks(ulong pawns, uint color)
         {
             if (color == Piece.WHITE)
-            { 
+            {
                 attackMap |= (pawns & ~AFile) << 7;
                 attackMap |= (pawns & ~HFile) << 9;
             }
@@ -71,7 +70,7 @@ namespace Chess.Logic
             }
 
         }
-        
+
         public static void MapDiagonallAttacks(ulong diagonalls)
         {
             ulong allPieces = (Board.blackPieces.allPieces | Board.whitePieces.allPieces) ^ enemyKing;
@@ -92,7 +91,7 @@ namespace Chess.Logic
 
             diagonalMap = diagonalls;
             //S+W
-            while(diagonalMap != 0)
+            while (diagonalMap != 0)
             {
                 diagonalMap &= ~AFile;
                 diagonalMap >>= 9;
@@ -103,7 +102,7 @@ namespace Chess.Logic
 
             diagonalMap = diagonalls;
             //N+E
-            while(diagonalMap != 0)
+            while (diagonalMap != 0)
             {
                 diagonalMap &= ~HFile;
                 diagonalMap <<= 9;
@@ -114,7 +113,7 @@ namespace Chess.Logic
 
             diagonalMap = diagonalls;
             //S+E
-            while(diagonalMap != 0)
+            while (diagonalMap != 0)
             {
                 diagonalMap &= ~HFile;
                 diagonalMap >>= 7;
@@ -219,7 +218,7 @@ namespace Chess.Logic
             ulong kingAttacks = 0;
 
             ulong diagonalMap = king;
-           
+
             while (diagonalMap != 0)
             {
                 diagonalMap &= ~AFile;
@@ -240,7 +239,7 @@ namespace Chess.Logic
 
             ulong diagonalMap = king;
 
-            
+
             while (diagonalMap != 0)
             {
                 diagonalMap &= ~HFile;

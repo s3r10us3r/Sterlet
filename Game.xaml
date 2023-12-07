@@ -9,14 +9,35 @@
 
     <Grid Background="#222224">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="552*"/>
-            <ColumnDefinition Width="169*"/>
-            <ColumnDefinition Width="41*"/>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="600"/>
+            <ColumnDefinition Width="300"/>
         </Grid.ColumnDefinitions>
 
-        <Border BorderBrush="White" BorderThickness="3" Grid.ColumnSpan="3" VerticalAlignment="Center" HorizontalAlignment="Center">
-            <gui:ChessBoard x:Name ="chessBoard"/>
-        </Border>
+        <Grid Grid.ColumnSpan="3" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="700"/>
+                <RowDefinition Height="50"/>
+            </Grid.RowDefinitions>
+            
+            <Border x:Name="chessBoardBorder" BorderBrush="White" BorderThickness="3" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0">
+    
+            </Border>
+            
+            <Button x:Name="rotateButton" Grid.Row="1"  Width="50" HorizontalAlignment="Right" Background="Black" Click="RotateClick" >
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="LightGray"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                
+                <Image Source="Resources/guiImages/rotate_icon.png"/>
+            </Button>
+        </Grid>
 
     </Grid>
 </Page>

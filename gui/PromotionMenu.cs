@@ -25,7 +25,7 @@ namespace Chess.gui
             StackPanel stackPanel = new StackPanel();
             stackPanel.Orientation = Orientation.Horizontal;
 
-            foreach(uint piece in possiblePieces)
+            foreach (uint piece in possiblePieces)
             {
                 PieceButton pieceButton = new PieceButton(piece, color, this);
                 stackPanel.Children.Add(pieceButton);
@@ -92,7 +92,7 @@ namespace Chess.gui
         }
     }
 
-    
+
 
 }
 
