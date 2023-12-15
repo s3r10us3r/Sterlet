@@ -1,4 +1,5 @@
 ﻿using Chess.gui;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -9,22 +10,42 @@ namespace Chess
     /// </summary>
     public partial class Menu : Page
     {
-        private MainWindow mainWindow;
-
-        public Menu(MainWindow mainWindow)
+        public Menu()
         {
             InitializeComponent();
-            this.mainWindow = mainWindow;
         }
 
         private void PlayerVsPlayer_Click(object sender, RoutedEventArgs e)
         {
-            mainWindow.ChangePage(new Game(Logic.Board.STARTING_POSITION, PlayerType.HUMAN_PLAYER, PlayerType.HUMAN_PLAYER));
+            popup.IsOpen = true;
         }
 
         private void PlayerVsMachine_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("PLAYER VS MACHINE PLACEHOLDER");
+            popup.IsOpen = true;
+            //MessageBox.Show("PLAYER VS MACHINE PLACEHOLDER");
+        }
+
+        private void TimePlusClicked(object sender, RoutedEventArgs e)
+        {
+            Console.WriteLine("+ clicked");
+        }
+
+        private void TimeMinusClicked(object sender, RoutedEventArgs e)
+        {
+            Console.WriteLine("- clicked");
+        }
+
+        private void DiffPlusClicked(object sender, RoutedEventArgs e)
+        {
+            Console.WriteLine("+ clicked");
+        }
+
+        private void DiffMinusClicked(object sender, RoutedEventArgs e)
+        {
+            Console.WriteLine("- clicked");
         }
     }
+
+   
 }

@@ -11,7 +11,8 @@ namespace Chess
         public MainWindow()
         {
             InitializeComponent();
-            mainFrame.Content = new Menu(this);
+            mainFrame.Content = new Menu();
+            Application.Current.MainWindow = this;
         }
 
         public void ChangePage(Page page)

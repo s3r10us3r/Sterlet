@@ -11,12 +11,12 @@ namespace Chess
     {
         private readonly ChessBoard chessBoard;
 
-        public Game(string FEN, PlayerType whitePlayerType, PlayerType blackPlayerType)
+        public Game(string FEN, PlayerType whitePlayerType, PlayerType blackPlayerType, TimerOptions timerOptions)
         {
             InitializeComponent();
 
-            Timer timerWhite = new Timer(180, 1, whiteTimer);
-            Timer timerBlack = new Timer(180, 1, blackTimer);
+            Timer timerWhite = new Timer(timerOptions, whiteTimer);
+            Timer timerBlack = new Timer(timerOptions, blackTimer);
 
             Logic.Board.ReadFEN(FEN);
             chessBoard = new ChessBoard(whitePlayerType, blackPlayerType, timerWhite, timerBlack);

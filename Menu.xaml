@@ -8,23 +8,36 @@
       d:DesignHeight="1080" d:DesignWidth="1920"
       Title="Page1">
 
-    <StackPanel Background="#222224" Orientation="Vertical">
-        <Label Content="STERLET" Width="900" Height="200" Margin="0, 50, 0, 0" Foreground="White" FontSize="150" HorizontalContentAlignment="Center" FontFamily="Times New Roman"></Label>
+    <Grid Background="#222224">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
         
-        <Button x:Name="PlayerVsPlayerButton" Click="PlayerVsPlayer_Click"  Content="Player vs Player" Foreground="White" FontSize="40" Width="600" Height="150" HorizontalAlignment="Center" Margin="100">
-            <Button.Background>
-                <SolidColorBrush Color="Black" Opacity="0.4"/>
-            </Button.Background>
-        </Button>
-        
-        <Button x:Name="PlayerVsMachineButton" Click="PlayerVsMachine_Click" Content="Player vs Machine" Foreground="White" FontSize="40" Width="600" Height="150" HorizontalAlignment="Center" >
+        <Label Grid.Row="0" Content="STERLET" Width="900" Height="200" Margin="0, 50, 0, 0" Foreground="White" FontSize="150" HorizontalContentAlignment="Center" FontFamily="Times New Roman">
+        </Label>
+
+        <Button Grid.Row="1" x:Name="PlayerVsPlayerButton" Click="PlayerVsPlayer_Click"  Content="Player vs Player" Foreground="White" FontSize="40" Width="600" Height="150" HorizontalAlignment="Center" >
             <Button.Background>
                 <SolidColorBrush Color="Black" Opacity="0.4"/>
             </Button.Background>
         </Button>
 
-        <Border x:Name="Footer" VerticalAlignment="Center" Height="50">
-            
+        <Button Grid.Row="2" x:Name="PlayerVsMachineButton" Click="PlayerVsMachine_Click" Content="Player vs Machine" Foreground="White" FontSize="40" Width="600" Height="150" HorizontalAlignment="Center" >
+            <Button.Background>
+                <SolidColorBrush Color="Black" Opacity="0.4"/>
+            </Button.Background>
+        </Button>
+
+        <Popup x:Name="popup"  IsOpen="False" Placement="Center">
+            <local:PlayerVsPLayerPopupContents/>
+        </Popup>
+        
+        <Border Grid.Row="3"  x:Name="Footer" VerticalAlignment="Center" Height="50">
+
         </Border>
-    </StackPanel>
+
+    </Grid>
 </Page>

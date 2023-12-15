@@ -14,8 +14,12 @@ namespace Chess.gui
 
         private Stopwatch stopwatch;
 
-        public Timer(int startInSeconds, int incrementInSeconds, TextBlock timeDisplay)
+
+        bool isRunning = false;
+        public Timer(TimerOptions timerOption, TextBlock timeDisplay)
         {
+            int startInSeconds = timerOption.start;
+            int incrementInSeconds = timerOption.increment;
             initialCentiSeconds = startInSeconds * 100;
             increment = incrementInSeconds * 100;
             this.timeDisplay = timeDisplay;
@@ -66,14 +70,17 @@ namespace Chess.gui
         {
             stopwatch.Stop();
             timer.Stop();
-            initialCentiSeconds += increment;
+            if (isRunning)
+                initialCentiSeconds += increment;
             UpdateTimer();
+            isRunning = false;
         }
 
         public void Start()
         {
             stopwatch.Start();
             timer.Start();
+            isRunning = true;
         }
     }
 }
