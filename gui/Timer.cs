@@ -8,16 +8,25 @@ namespace Chess.gui
     public class Timer
     {
         private int initialCentiSeconds;
-        private int increment;
+        private readonly int increment;
         private TextBlock timeDisplay;
         private DispatcherTimer timer;
+        public ChessBoard ChessBoard { set; get; }
 
         private Stopwatch stopwatch;
 
+        private uint color;
 
-        bool isRunning = false;
-        public Timer(TimerOptions timerOption, TextBlock timeDisplay)
+        private bool isBlocked = false;
+
+        public Timer(TimerOptions timerOption, TextBlock timeDisplay, uint color)
         {
+            this.color = color;
+            if(timerOption.Option == TimerOptions.Options.NoTime)
+            {
+                isBlocked = true;
+            }
+
             int startInSeconds = timerOption.start;
             int incrementInSeconds = timerOption.increment;
             initialCentiSeconds = startInSeconds * 100;
@@ -35,15 +44,17 @@ namespace Chess.gui
 
         private void TickMethod(object sender, EventArgs e)
         {
-            if (initialCentiSeconds - (int)stopwatch.ElapsedMilliseconds / 10 > 0)
-            {
-                UpdateTimer();
-            }
+            UpdateTimer();
         }
 
         private void UpdateTimer()
         {
-            int centiSecondsLeft = initialCentiSeconds - (int)stopwatch.ElapsedMilliseconds / 10;
+            int centiSecondsLeft = initialCentiSeconds - ((int)stopwatch.ElapsedMilliseconds / 10);
+            if (centiSecondsLeft <= 0)
+            {
+                isBlocked = true;
+                centiSecondsLeft = 0;
+            }
             int secondsDisplay = centiSecondsLeft / 100;
             int centiSecondsDisplay = centiSecondsLeft - (secondsDisplay * 100);
             int minutesDisplay = secondsDisplay / 60;
@@ -64,23 +75,39 @@ namespace Chess.gui
             {
                 timeDisplay.Text = displayString;
             });
+
+            if (isBlocked)
+            {
+                Stop();
+                if (color == Logic.Piece.WHITE)
+                {
+                    ChessBoard.Finish("Black won!", "White ran out of time.");
+                }
+                if (color == Logic.Piece.BLACK)
+                {
+                    ChessBoard.Finish("White won!", "Black ran out of time.");
+                }
+            }
         }
 
         public void Stop()
         {
             stopwatch.Stop();
             timer.Stop();
-            if (isRunning)
+            if (!isBlocked)
+            {
                 initialCentiSeconds += increment;
-            UpdateTimer();
-            isRunning = false;
+                UpdateTimer();
+            }
         }
 
         public void Start()
         {
-            stopwatch.Start();
-            timer.Start();
-            isRunning = true;
+            if (!isBlocked)
+            {
+                stopwatch.Start();
+                timer.Start();
+            }
         }
     }
 }

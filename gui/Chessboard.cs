@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
 
 namespace Chess.gui
 {
@@ -30,9 +27,17 @@ namespace Chess.gui
         private Timer whiteTimer;
         private Timer blackTimer;
 
+        private readonly TextBlock whoWonText;
+        private readonly TextBlock reasonText;
+
         private uint[] boardRepresentation = (uint[])Logic.Board.board.Clone();
-        public ChessBoard(PlayerType whitePlayerType, PlayerType blackPlayerType, Timer whiteTimer, Timer blackTimer) : base()
+
+        private bool blocked = false;
+        public ChessBoard(PlayerType whitePlayerType, PlayerType blackPlayerType, Timer whiteTimer, Timer blackTimer, TextBlock whoWonText, TextBlock reasonText) : base()
         {
+            this.whoWonText = whoWonText;
+            this.reasonText = reasonText;
+
             this.whitePlayerType = whitePlayerType;
             this.blackPlayerType = blackPlayerType;
 
@@ -116,6 +121,8 @@ namespace Chess.gui
 
         public void MovePieceOnBoard(int oldField, int newField)
         {
+            if (blocked)
+                return;
             PieceImage piece = boardArray[oldField];
             boardArray[oldField] = null;
             boardArray[newField] = piece;
@@ -129,6 +136,9 @@ namespace Chess.gui
 
         public void RemovePieceFromBoard(int field)
         {
+            if (blocked)
+                return;
+
             PieceImage piece = boardArray[field];
             boardArray[field] = null;
 
@@ -137,6 +147,9 @@ namespace Chess.gui
 
         public void AddPieceToBoard(int field, uint newPiece)
         {
+            if (blocked)
+                return;
+
             PieceImage piece = new PlayerControlledPiece(newPiece, field, this);
             boardArray[field] = piece;
             int row, col;
@@ -174,6 +187,9 @@ namespace Chess.gui
 
         public void HighlightFields(List<int> fields)
         {
+            if (blocked)
+                return;
+
             int row, col;
             foreach (int field in fields)
             {
@@ -187,6 +203,9 @@ namespace Chess.gui
 
         public void StopHighlightingFields(List<int> fields)
         {
+            if (blocked)
+                return;
+
             int row, col;
             foreach (int field in fields)
             {
@@ -200,6 +219,9 @@ namespace Chess.gui
 
         public void UpdateBoard()
         {
+            if (blocked)
+                return;
+
             for (int i = 0; i < 64; i++)
             {
                 if (boardRepresentation[i] != Logic.Board.board[i])
@@ -212,13 +234,13 @@ namespace Chess.gui
                 }
             }
 
-            if(whitePlayerType == blackPlayerType && whitePlayerType == PlayerType.HUMAN_PLAYER)
+            if (whitePlayerType == blackPlayerType && whitePlayerType == PlayerType.HUMAN_PLAYER)
             {
                 Thread.Sleep(100);
                 Invert();
             }
 
-            if(Logic.Board.toMove == Logic.Piece.WHITE)
+            if (Logic.Board.toMove == Logic.Piece.WHITE)
             {
                 blackTimer.Stop();
                 whiteTimer.Start();
@@ -232,55 +254,16 @@ namespace Chess.gui
             moves = Logic.MoveGenerator.GenerateMoves();
         }
 
-        public void BlackWin()
+
+        public void Finish(string whoWon, string reason)
         {
-            EndPopup("BLACK WON!", Color.FromRgb(0, 0, 0), Color.FromRgb(255, 255, 255), Color.FromRgb(0, 0, 0));
-        }
+            whoWonText.Text = whoWon;
+            reasonText.Text = reason;
 
-        public void WhiteWin()
-        {
-            EndPopup("WHITE WON!", Color.FromRgb(255, 255, 255), Color.FromRgb(0, 0, 0), Color.FromRgb(0, 0, 0));
-        }
-
-        public void Draw()
-        {
-            EndPopup("DRAW", Color.FromRgb(0, 0, 0), Color.FromRgb(255, 255, 255), Color.FromRgb(0, 0, 0));
-        }
-
-        private void EndPopup(string text, Color textColor, Color backgroundColor, Color shadowColor)
-        {
-            Popup endPopup = new Popup();
-
-            Border border = new Border
-            {
-                BorderBrush = new SolidColorBrush(backgroundColor),
-                BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(backgroundColor)
-            };
-
-            Label label = new Label
-            {
-                Content = text,
-                Padding = new Thickness(10),
-                FontSize = 100,
-                Foreground = new SolidColorBrush(textColor)
-            };
-
-            label.Effect = new DropShadowEffect
-            {
-                Color = shadowColor,
-                ShadowDepth = 0,
-                BlurRadius = 2
-            };
-
-            border.Child = label;
-
-            endPopup.Child = border;
-            endPopup.PlacementTarget = this;
-            endPopup.Placement = PlacementMode.Center;
-            Children.Add(endPopup);
-
-            endPopup.IsOpen = true;
+            moves = new List<Logic.Move>();
+            blocked = true;
+            whiteTimer.Stop();
+            blackTimer.Stop();
         }
     }
 }

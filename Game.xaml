@@ -13,24 +13,16 @@
             <ColumnDefinition Width="2*"/>
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="19*"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
 
         <Border x:Name="chessBoardBorder" BorderBrush="White" BorderThickness="3" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="1" Width="600" Height="600">
 
         </Border>
 
-        <Button x:Name="rotateButton" Grid.Column="1" Height="50"  Width="50" HorizontalAlignment="Right" Background="Black" Click="RotateClick" >
-            <Button.Style>
-                <Style TargetType="Button">
-                    <Style.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="LightGray"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </Button.Style>
-
-            <Image Source="Resources/guiImages/rotate_icon.png"/>
-        </Button>
 
         <Border BorderBrush="White" BorderThickness="0,0,0,5" Height="100" Width="200">
             <TextBlock x:Name="whiteTimer" Grid.Column="0" Text="33:00" Width="200" Height="75" Foreground="White" FontSize="50" TextAlignment="Center"/>
@@ -39,6 +31,9 @@
         <Border BorderBrush="White" BorderThickness="0,0,0,5" Height="100" Width="200" Grid.Column="2">
             <TextBlock x:Name="blackTimer" Grid.Column="0" Text="33:00" Width="200" Height="75" Foreground="White" FontSize="50" TextAlignment="Center"/>
         </Border>
+
+        <TextBlock x:Name="whoWonText" Grid.Row="1" Grid.Column="1" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="50"/>
+        <TextBlock x:Name="reasonText" Grid.Row="2" Grid.Column="1" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
 
     </Grid>
 </Page>

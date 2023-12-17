@@ -15,15 +15,14 @@ namespace Chess
         {
             InitializeComponent();
 
-            Timer timerWhite = new Timer(timerOptions, whiteTimer);
-            Timer timerBlack = new Timer(timerOptions, blackTimer);
+            Timer timerWhite = new Timer(timerOptions, whiteTimer, Logic.Piece.WHITE);
+            Timer timerBlack = new Timer(timerOptions, blackTimer, Logic.Piece.BLACK);
 
             Logic.Board.ReadFEN(FEN);
-            chessBoard = new ChessBoard(whitePlayerType, blackPlayerType, timerWhite, timerBlack);
+            chessBoard = new ChessBoard(whitePlayerType, blackPlayerType, timerWhite, timerBlack, whoWonText, reasonText);
             chessBoardBorder.Child = chessBoard;
-
-            if (whitePlayerType == blackPlayerType && whitePlayerType == PlayerType.HUMAN_PLAYER)
-                rotateButton.Visibility = Visibility.Collapsed;
+            timerWhite.ChessBoard = chessBoard;
+            timerBlack.ChessBoard = chessBoard;
         }
 
         private void RotateClick(object sender, RoutedEventArgs e)
