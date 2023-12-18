@@ -438,6 +438,8 @@ namespace Chess.Logic
             toStay = wasMoving;
         }
 
+
+
         private static void SetPosition(string[] rows)
         {
             int i = 56;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Chess.Brain;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Windows;
@@ -237,7 +238,7 @@ namespace Chess.gui
             if (whitePlayerType == blackPlayerType && whitePlayerType == PlayerType.HUMAN_PLAYER)
             {
                 Thread.Sleep(100);
-                Invert();
+               //Invert();
             }
 
             if (Logic.Board.toMove == Logic.Piece.WHITE)
@@ -252,6 +253,25 @@ namespace Chess.gui
             }
 
             moves = Logic.MoveGenerator.GenerateMoves();
+
+            GameState gameState = Referee.DetermineGameState(moves);
+            if(gameState != GameState.ONGOING)
+            {
+                if (gameState == GameState.WIN)
+                {
+                    string whoWon = Logic.Board.toMove == Logic.Piece.WHITE ? "Black wins!" : "White wins!";
+                    string reason = "Checkmate!";
+                    Finish(whoWon, reason);
+                }
+                else if(gameState == GameState.DRAW_BY_MATERIAL)
+                {
+                    Finish("Draw", "Insufficient material");
+                }
+                else if(gameState == GameState.DRAW_BY_STALEMATE)
+                {
+                    Finish("Draw", "By stalemate");
+                }
+            }
         }
 
 

@@ -70,6 +70,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="BitMagic\BitMagician.cs" />
+    <Compile Include="Brain\MoveClass.cs" />
+    <Compile Include="Brain\Referee.cs" />
     <Compile Include="Exceptions\InvalidMoveException.cs" />
     <Compile Include="Game.xaml.cs">
       <DependentUpon>Game.xaml</DependentUpon>

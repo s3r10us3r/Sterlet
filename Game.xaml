@@ -24,11 +24,11 @@
         </Border>
 
 
-        <Border BorderBrush="White" BorderThickness="0,0,0,5" Height="100" Width="200">
+        <Border x:Name="whiteTimerBorder" BorderBrush="White" BorderThickness="0,0,0,5" Height="100" Width="200">
             <TextBlock x:Name="whiteTimer" Grid.Column="0" Text="33:00" Width="200" Height="75" Foreground="White" FontSize="50" TextAlignment="Center"/>
         </Border>
 
-        <Border BorderBrush="White" BorderThickness="0,0,0,5" Height="100" Width="200" Grid.Column="2">
+        <Border x:Name="blackTimerBorder" BorderBrush="White" BorderThickness="0,0,0,5" Height="100" Width="200" Grid.Column="2">
             <TextBlock x:Name="blackTimer" Grid.Column="0" Text="33:00" Width="200" Height="75" Foreground="White" FontSize="50" TextAlignment="Center"/>
         </Border>
 

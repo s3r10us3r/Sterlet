@@ -18,6 +18,12 @@ namespace Chess
             Timer timerWhite = new Timer(timerOptions, whiteTimer, Logic.Piece.WHITE);
             Timer timerBlack = new Timer(timerOptions, blackTimer, Logic.Piece.BLACK);
 
+            if (timerOptions.Option == TimerOptions.Options.NoTime)
+            {
+                whiteTimerBorder.Visibility = Visibility.Hidden;
+                blackTimerBorder.Visibility = Visibility.Hidden;
+            }
+
             Logic.Board.ReadFEN(FEN);
             chessBoard = new ChessBoard(whitePlayerType, blackPlayerType, timerWhite, timerBlack, whoWonText, reasonText);
             chessBoardBorder.Child = chessBoard;

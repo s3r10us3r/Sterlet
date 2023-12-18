@@ -22,9 +22,10 @@ namespace Chess.gui
         public Timer(TimerOptions timerOption, TextBlock timeDisplay, uint color)
         {
             this.color = color;
-            if(timerOption.Option == TimerOptions.Options.NoTime)
+            if (timerOption.Option == TimerOptions.Options.NoTime)
             {
                 isBlocked = true;
+                return;
             }
 
             int startInSeconds = timerOption.start;
@@ -92,13 +93,15 @@ namespace Chess.gui
 
         public void Stop()
         {
+            if (isBlocked)
+            {
+                return;
+            }
+            initialCentiSeconds += increment;
+            UpdateTimer();
             stopwatch.Stop();
             timer.Stop();
-            if (!isBlocked)
-            {
-                initialCentiSeconds += increment;
-                UpdateTimer();
-            }
+            
         }
 
         public void Start()
