@@ -1,4 +1,5 @@
 ﻿using Chess.Brain;
+using Chess.Logic;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -21,7 +22,7 @@ namespace Chess.gui
         
         private PieceImage[] boardArray = new PieceImage[64];
         private Border[,] fieldArray = new Border[8, 8];
-        public List<Logic.Move> moves;
+        public List<Move> moves;
         private PlayerType whitePlayerType;
         private PlayerType blackPlayerType;
 
@@ -34,8 +35,11 @@ namespace Chess.gui
         private uint[] boardRepresentation = (uint[])Logic.Board.board.Clone();
 
         private bool blocked = false;
+
+        private Sterlet sterlet;
         public ChessBoard(PlayerType whitePlayerType, PlayerType blackPlayerType, Timer whiteTimer, Timer blackTimer, TextBlock whoWonText, TextBlock reasonText) : base()
         {
+            sterlet = new Sterlet(5, Piece.BLACK);
             this.whoWonText = whoWonText;
             this.reasonText = reasonText;
 
@@ -109,15 +113,15 @@ namespace Chess.gui
         {
             for (int i = 0; i < 64; i++)
             {
-                if (Logic.Board.board[i] != Logic.Piece.NONE && Logic.Board.board[i] != Logic.Piece.WALL)
+                if (Board.board[i] != Piece.NONE && Board.board[i] != Piece.WALL)
                 {
-                    AddPieceToBoard(i, Logic.Board.board[i]);
+                    AddPieceToBoard(i, Board.board[i]);
                 }
             }
 
             Console.WriteLine("HERE 5");
 
-            moves = Logic.MoveGenerator.GenerateMoves();
+            moves = MoveGenerator.GenerateMoves();
         }
 
         public void MovePieceOnBoard(int oldField, int newField)
@@ -151,7 +155,24 @@ namespace Chess.gui
             if (blocked)
                 return;
 
-            PieceImage piece = new PlayerControlledPiece(newPiece, field, this);
+            PlayerType playerType;
+            if (Piece.GetColor(newPiece) == Piece.BLACK)
+            {
+                playerType = blackPlayerType;
+            }
+            else
+            {
+                playerType = whitePlayerType;
+            }
+            PieceImage piece;
+            if (playerType == PlayerType.COMPUTER_PLAYER)
+            {
+                piece = new PieceImage(newPiece, field, this);
+            }
+            else
+            {
+                piece = new PlayerControlledPiece(newPiece, field, this);
+            }
             boardArray[field] = piece;
             int row, col;
             (row, col) = FieldToRowCol(piece.field);
@@ -220,6 +241,7 @@ namespace Chess.gui
 
         public void UpdateBoard()
         {
+            
             if (blocked)
                 return;
 
@@ -238,10 +260,10 @@ namespace Chess.gui
             if (whitePlayerType == blackPlayerType && whitePlayerType == PlayerType.HUMAN_PLAYER)
             {
                 Thread.Sleep(100);
-               //Invert();
+                Invert();
             }
 
-            if (Logic.Board.toMove == Logic.Piece.WHITE)
+            if (Board.toMove == Piece.WHITE)
             {
                 blackTimer.Stop();
                 whiteTimer.Start();
@@ -252,14 +274,13 @@ namespace Chess.gui
                 blackTimer.Start();
             }
 
-            moves = Logic.MoveGenerator.GenerateMoves();
-
+            moves = MoveGenerator.GenerateMoves();
             GameState gameState = Referee.DetermineGameState(moves);
             if(gameState != GameState.ONGOING)
             {
                 if (gameState == GameState.WIN)
                 {
-                    string whoWon = Logic.Board.toMove == Logic.Piece.WHITE ? "Black wins!" : "White wins!";
+                    string whoWon = Board.toMove == Piece.WHITE ? "Black wins!" : "White wins!";
                     string reason = "Checkmate!";
                     Finish(whoWon, reason);
                 }
@@ -271,7 +292,21 @@ namespace Chess.gui
                 {
                     Finish("Draw", "By stalemate");
                 }
+                return;
             }
+
+            PlayerType playerType = Board.toMove == Piece.WHITE ? whitePlayerType : blackPlayerType;
+
+            if (playerType == PlayerType.COMPUTER_PLAYER)
+            {
+                Move move = sterlet.ChooseMove(moves);
+                if (move != null)
+                {
+                    Board.MakeMove(move);
+                    UpdateBoard();
+                }
+            }
+
         }
 
 
@@ -280,7 +315,7 @@ namespace Chess.gui
             whoWonText.Text = whoWon;
             reasonText.Text = reason;
 
-            moves = new List<Logic.Move>();
+            moves = new List<Move>();
             blocked = true;
             whiteTimer.Stop();
             blackTimer.Stop();

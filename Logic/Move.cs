@@ -11,11 +11,11 @@
             public const int None = 0;
             public const int EnPassantCapture = 1;
             public const int Castling = 2;
-            public const int PromoteToQueen = 3;
-            public const int PromoteToKnight = 4;
-            public const int PromoteToRook = 5;
-            public const int PromoteToBishop = 6;
-            public const int PawnTwoForward = 7;
+            public const int PawnTwoForward = 3;
+            public const int PromoteToQueen = 4;
+            public const int PromoteToKnight = 5;
+            public const int PromoteToRook = 6;
+            public const int PromoteToBishop = 7;
         }
 
         const ushort startSquareMask = 0b0000000000111111;

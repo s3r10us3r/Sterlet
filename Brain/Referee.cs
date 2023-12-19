@@ -1,10 +1,6 @@
 ﻿using Chess.BitMagic;
 using Chess.Logic;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Chess.Brain
 {
@@ -30,16 +26,9 @@ namespace Chess.Brain
 
             ulong attackMap = AttackMapper.MapAttacks(Board.toStay, toStay, toMove);
 
-            if(moves.Count == 0)
+            if (moves.Count == 0)
             {
-                if((attackMap & toMove.kingPosition) != 0)
-                {
-                    return GameState.WIN;
-                }
-                else
-                {
-                    return GameState.DRAW_BY_STALEMATE;
-                }
+                return (attackMap & toMove.kingPosition) != 0 ? GameState.WIN : GameState.DRAW_BY_STALEMATE;
             }
 
 

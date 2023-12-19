@@ -22,8 +22,8 @@ namespace Chess
 
         private void PlayerVsMachine_Click(object sender, RoutedEventArgs e)
         {
-            popup.IsOpen = true;
-            //MessageBox.Show("PLAYER VS MACHINE PLACEHOLDER");
+            //popup.IsOpen = true;
+            ((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, PlayerType.HUMAN_PLAYER, PlayerType.COMPUTER_PLAYER, new TimerOptions(TimerOptions.Options.NoTime)));
         }
 
         private void TimePlusClicked(object sender, RoutedEventArgs e)

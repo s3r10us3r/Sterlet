@@ -71,6 +71,22 @@ namespace Chess.Logic
 
         }
 
+        public static ulong getPawnAttacks(ulong pawns, uint color)
+        {
+            ulong attackMap = 0;
+            if (color == Piece.WHITE)
+            {
+                attackMap |= (pawns & ~AFile) << 7;
+                attackMap |= (pawns & ~HFile) << 9;
+            }
+            else
+            {
+                attackMap |= (pawns & ~AFile) >> 9;
+                attackMap |= (pawns & ~HFile) >> 7;
+            }
+            return attackMap;
+        }
+
         public static void MapDiagonallAttacks(ulong diagonalls)
         {
             ulong allPieces = (Board.blackPieces.allPieces | Board.whitePieces.allPieces) ^ enemyKing;
