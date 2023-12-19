@@ -121,9 +121,6 @@ namespace Chess.gui
                 transform.Y = 0;
 
                 int newField = ChessBoard.RowColToFieldNumber(newRow, newCol);
-                Console.WriteLine($"CURRENT ROW {oldRow} NEW ROW {newRow}");
-                Console.WriteLine($"CURRENT COL {oldCol} NEW COL {newCol}");
-                Console.WriteLine($"CURRENT FIELD {field} NEW FIELD {newField}");
 
                 List<Move> movesThatCouldBeMade = new List<Move>();
                 foreach (Move move in availableMoves)

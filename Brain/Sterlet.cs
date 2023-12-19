@@ -8,20 +8,20 @@ namespace Chess.Brain
 {
     public class Sterlet
     {
-        private int depth;
+        private int initialDepth;
         private const double PAWN = 1, ROOK = 5, QUEEN = 9, BISHOP = 3.3, KNIGHT = 3.2;
-        private double allyMultiplier = 1;
-        private double enemyMultiplier = -1;
 
         private PieceList allyPieces;
         private PieceList enemyPieces;
         private uint allyColor;
         private uint enemyColor;
 
+        private readonly Predicate<Move> isCapture = move => MoveClassifier.IsCapture(move);
+
         private static int nodesVisited = 0;
         public Sterlet(int depth, uint color)
         {
-            this.depth = depth;
+            this.initialDepth = depth;
             if (color == Piece.WHITE)
             {
                 allyPieces = Board.whitePieces;
@@ -43,102 +43,160 @@ namespace Chess.Brain
             Move chosenMove = null;
 
             nodesVisited = 0;
-            double maxScore = double.MinValue;
-            foreach (Move move in moves)
+            double alpha = double.MinValue;
+            double beta = double.MaxValue;
+            OrderMoves(moves);
+            foreach(Move move in moves)
             {
                 Board.MakeMove(move);
-                double score = -NegaMax(depth - 1, double.MinValue, double.MaxValue);
-                if (score > maxScore)
+                double score = AlphaBetaMin(alpha, beta, initialDepth - 1);
+                if( score >= beta )
                 {
-                    maxScore = score;
+                    Board.UnMakeMove();
+                    break;
+                }
+                if (score > alpha)
+                {
+                    alpha = score;
                     chosenMove = move;
                 }
                 Board.UnMakeMove();
             }
-            Console.WriteLine($"VISITED NODES {nodesVisited}");
+            
+
+            Console.WriteLine($"VISITED NODES {nodesVisited} MOVE {chosenMove} EVALUATED AT {alpha}");
             return chosenMove;
         }
 
-        public double Evaluate(List<Move> moves)
+        public double Evaluate()
         {
-            GameState gameState = Referee.DetermineGameState(moves);
-            if (gameState != GameState.ONGOING)
-            {
-                if (gameState == GameState.WIN)
-                {
-                    return QUEEN * 30 * allyMultiplier;
-                }
-                else
-                {
-                    return 0;
-                }
-            }
-
-            return (MaterialWeight(allyPieces) - MaterialWeight(enemyPieces)) * allyMultiplier;
+            nodesVisited++;
+            return MaterialWeight(allyPieces) - MaterialWeight(enemyPieces);
         }
 
-        private double NegaMax(int depth, double a, double b)
+        private double AlphaBetaMin(double alpha, double beta, int depth)
         {
-            List<Move> moves = MoveGenerator.GenerateMoves();
-            if (depth == 0 || moves.Count == 0)
+            if (depth == 0)
             {
-                return QuiesNegaMax(-b, -a);
+                return AlphaBetaMinQuiscence(alpha, beta);
+            }  
+            List<Move> moves = MoveGenerator.GenerateMoves();
+            if(moves.Count == 0)
+            {
+                return EvaluateGameState();
             }
-
             OrderMoves(moves);
-            SwapValues();
+            foreach(Move move in moves)
+            {
+                Board.MakeMove(move);
+                double score = AlphaBetaMax(alpha, beta, depth - 1);
+                if (score <= alpha)
+                {
+                    Board.UnMakeMove();
+                    return alpha;
+                }
+                if (score < beta)
+                {
+                    beta = score;
+                }
+                Board.UnMakeMove();
+            }
+            return beta;
+        }
+
+        private double AlphaBetaMax(double alpha, double beta, int depth)
+        {
+            if (depth == 0)
+            {
+                return AlphaBetaMaxQuiscence(alpha, beta);
+            }
+            List<Move> moves = MoveGenerator.GenerateMoves();
+            if (moves.Count == 0)
+            {
+                return -EvaluateGameState();
+            }
+            OrderMoves(moves);
             foreach (Move move in moves)
             {
                 Board.MakeMove(move);
-                double score = -NegaMax(depth - 1, -b, -a);
-                if (score >= b)
+                double score = AlphaBetaMin(alpha, beta, depth - 1);
+                if (score >= beta)
                 {
                     Board.UnMakeMove();
-                    return b;
+                    return beta;
                 }
-                if (score > a)
+                if (score > alpha)
                 {
-                    a = score;
+                    alpha = score;
                 }
                 Board.UnMakeMove();
             }
-            SwapValues();
-            return a;
+            return alpha;
         }
 
-        private double QuiesNegaMax(double a, double b)
+        private double AlphaBetaMinQuiscence(double alpha, double beta)
         {
             List<Move> moves = MoveGenerator.GenerateMoves();
-            Predicate<Move> isCapture = move => MoveClassifier.IsCapture(move);
-            List<Move> quiesMoves = moves.FindAll(isCapture);
-            if (quiesMoves.Count == 0)
+            if(moves.Count == 0)
             {
-                nodesVisited++;
-                return Evaluate(moves);
+                return EvaluateGameState();
             }
-
-            OrderMoves(quiesMoves);
-            SwapValues();
-            foreach (Move move in quiesMoves)
+            moves = moves.FindAll(isCapture);
+            if(moves.Count == 0)
+            {
+                return Evaluate();
+            }
+            OrderMoves(moves);
+            foreach (Move move in moves)
             {
                 Board.MakeMove(move);
-                double score = QuiesNegaMax(-b, -a);
-                if (score >= b)
+                double score = AlphaBetaMaxQuiscence(alpha, beta);
+                if (score <= alpha)
                 {
                     Board.UnMakeMove();
-                    return b;
+                    return alpha;
                 }
-                if (score > a)
+                if (score < beta)
                 {
-                    a = score;
+                    beta = score;
                 }
                 Board.UnMakeMove();
             }
-            SwapValues();
-            return a;
+            return beta;
         }
 
-        private void OrderMoves (List<Move> moves)
+        private double AlphaBetaMaxQuiscence(double alpha, double beta)
+        {
+            List<Move> moves = MoveGenerator.GenerateMoves();
+            if (moves.Count == 0)
+            {
+                return -EvaluateGameState();
+            }
+            moves = moves.FindAll(isCapture);
+            if (moves.Count == 0)
+            {
+                return Evaluate();
+            }
+            OrderMoves(moves);
+            foreach (Move move in moves)
+            {
+                Board.MakeMove(move);
+                double score = AlphaBetaMinQuiscence(alpha, beta);
+                if (score >= beta)
+                {
+                    Board.UnMakeMove();
+                    return beta;
+                }
+                if (score > alpha)
+                {
+                    alpha = score;
+                }
+                Board.UnMakeMove();
+            }
+            return alpha;
+        }
+
+        private void OrderMoves(List<Move> moves)
         {
             List<double> scores = new List<double>();
             ulong enemyPawnsAttacks = AttackMapper.getPawnAttacks(enemyPieces.pawns, enemyColor);
@@ -150,7 +208,7 @@ namespace Chess.Brain
 
                 if(capturedPiece != Piece.NONE)
                 {
-                    score = 10 * GetPieceValue(capturedPiece) - GetPieceValue(movingPiece);
+                    score = 10 * (GetPieceValue(capturedPiece) - GetPieceValue(movingPiece));
                 }
 
                 if (move.MoveFlag > Move.Flag.PawnTwoForward)
@@ -180,6 +238,21 @@ namespace Chess.Brain
             }
         }
 
+        //checks if player is mated
+        private double EvaluateGameState()
+        {
+            ulong enemyAttackMap = MoveGenerator.enemyAttackMap;
+            ulong allyKingPosition = Board.toMove == Piece.WHITE ? Board.whitePieces.kingPosition : Board.blackPieces.kingPosition;
+            if((enemyAttackMap & allyKingPosition) != 0)
+            {
+                return -300;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
         private double MaterialWeight(PieceList pieces)
         {
             int bishops = BitMagician.CountBits(pieces.diagonalSliders & ~pieces.orthogonalSliders);
@@ -188,13 +261,6 @@ namespace Chess.Brain
             int queens = BitMagician.CountBits(pieces.orthogonalSliders & pieces.diagonalSliders);
             int knights = BitMagician.CountBits(pieces.knights);
             return pawns * PAWN + bishops * BISHOP + rooks * ROOK + queens * QUEEN + knights * KNIGHT;
-        }
-
-        private void SwapValues()
-        {
-            (allyPieces, enemyPieces) = (enemyPieces, allyPieces);
-            (allyMultiplier, enemyMultiplier) = (enemyMultiplier, allyMultiplier);
-            (allyColor, enemyColor) = (enemyColor, allyColor);
         }
 
         private double GetPieceValue(uint piece)

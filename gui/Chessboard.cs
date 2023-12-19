@@ -18,7 +18,7 @@ namespace Chess.gui
         private readonly SolidColorBrush WHITE_FIELDS_COLOR = Brushes.Wheat;
         private readonly SolidColorBrush BLACK_FIELDS_COLOR = Brushes.DarkGreen;
         private readonly SolidColorBrush WHITE_HIGHLITED_COLOR = new SolidColorBrush(Color.FromRgb(255, 200, 150));
-        private readonly SolidColorBrush BLACK_HIGHLITED_COLOR = new SolidColorBrush(Color.FromRgb(100, 100, 00));
+        private readonly SolidColorBrush BLACK_HIGHLITED_COLOR = new SolidColorBrush(Color.FromRgb(100, 100, 0));
         
         private PieceImage[] boardArray = new PieceImage[64];
         private Border[,] fieldArray = new Border[8, 8];
@@ -32,7 +32,7 @@ namespace Chess.gui
         private readonly TextBlock whoWonText;
         private readonly TextBlock reasonText;
 
-        private uint[] boardRepresentation = (uint[])Logic.Board.board.Clone();
+        private uint[] boardRepresentation = (uint[])Board.board.Clone();
 
         private bool blocked = false;
 

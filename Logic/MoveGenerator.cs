@@ -11,7 +11,8 @@ namespace Chess.Logic
         private static readonly ulong blackKingsideCastleFields = whiteKingsideCastleFields << 56;
         private static readonly ulong blackQueensideCastleFields = whiteQueensideCastleFields << 56;
 
-        private static ulong enemyAttackMap;
+        public static ulong enemyAttackMap;
+        public static ulong allyAttackMap;
         private static ulong possibleFields = 0xFFFFFFFFFFFFFFFF;
         private static ulong enemyMask;
         private static ulong allyMask;
