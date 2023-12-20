@@ -55,6 +55,9 @@ namespace Chess.Logic
         public static ulong whiteKingPosition;
         public static ulong blackKingPosition;
 
+        public static ulong hash;
+        public static Stack<ulong> hashStack = new Stack<ulong>();
+
         public static Stack<Move> moveHistory = new Stack<Move>();
 
         public static void ReadFEN(string fenString)
@@ -90,23 +93,40 @@ namespace Chess.Logic
 
             whitePieces = new PieceList(board, Piece.WHITE);
             blackPieces = new PieceList(board, Piece.BLACK);
+
+            hash = Zobrist.HashCurrentPosition();
         }
 
         public static void MakeMove(Move move)
         {
+            hashStack.Push(hash);
+
+            if ((currentGameState & enPassantMask) != 0)
+            {
+                int prevEnPassantFile = (int)((currentGameState & enPassantMask) >> 4) - 1;
+                hash ^= Zobrist.enPassantFiles[prevEnPassantFile];
+            }
+
             uint newGameState = 0;
             newGameState |= currentGameState & (whiteKingsideCastleMask | whiteQueensideCastleMask | blackKingsideCastleMask | blackQueensideCastleMask);
             uint color = toMove;
             PieceList pieceList;
             PieceList enemyPieceList;
 
+            Keys toMoveKeys;
+            Keys toStayKeys;
+            hash ^= Zobrist.blackToMove;
             if (color == Piece.WHITE)
             {
+                toMoveKeys = Zobrist.whiteKeys;
+                toStayKeys = Zobrist.blackKeys;
                 pieceList = whitePieces;
                 enemyPieceList = blackPieces;
             }
             else
             {
+                toMoveKeys = Zobrist.blackKeys;
+                toStayKeys = Zobrist.whiteKeys;
                 pieceList = blackPieces;
                 enemyPieceList = whitePieces;
             }
@@ -120,6 +140,30 @@ namespace Chess.Logic
             bool captureWasMade = false;
 
             int flag = move.MoveFlag;
+
+            if (start == 0 || target == 0)
+            {
+                newGameState &= ~whiteQueensideCastleMask;
+                hash = Zobrist.HashOutWhiteQueensideCastleMask(hash);
+            }
+            if (start == 7 || target == 7)
+            {
+                newGameState &= ~whiteKingsideCastleMask;
+                hash = Zobrist.HashOutWhiteKingsideCastleMask(hash);
+            }
+            if (start == 56 || target == 56)
+            {
+                newGameState &= ~blackQueensideCastleMask;
+                hash = Zobrist.HashOutBlackQueensideCastleMask(hash);
+            }
+            if (start == 63 || target == 63)
+            {
+                newGameState &= ~blackKingsideCastleMask;
+                hash = Zobrist.HashOutBlackKingsideCastleMask(hash);
+            }
+
+            hash ^= Zobrist.GetPieceNum(piece, start, toMoveKeys);
+            hash ^= Zobrist.GetPieceNum(piece, target, toMoveKeys);
             switch (flag)
             {
                 case Move.Flag.None:
@@ -130,6 +174,8 @@ namespace Chess.Logic
                         enemyPieceList.RemovePieceAtField(target, Piece.GetPiece(enemyPiece));
                         newGameState |= enemyPiece << 8;
                         captureWasMade = true;
+
+                        hash ^= Zobrist.GetPieceNum(enemyPiece, target, toStayKeys);
                     }
                     if (pieceType == Piece.KING)
                     {
@@ -137,30 +183,17 @@ namespace Chess.Logic
                         {
                             newGameState &= ~whiteKingsideCastleMask;
                             newGameState &= ~whiteQueensideCastleMask;
+                            hash = Zobrist.HashOutWhiteKingsideCastleMask(hash);
+                            hash = Zobrist.HashOutWhiteQueensideCastleMask(hash);
                         }
                         else
                         {
                             newGameState &= ~blackKingsideCastleMask;
                             newGameState &= ~blackQueensideCastleMask;
+                            hash = Zobrist.HashOutBlackKingsideCastleMask(hash);
+                            hash = Zobrist.HashOutBlackQueensideCastleMask(hash);
                         }
                     }
-                    if (start == 0 || target == 0)
-                    {
-                        newGameState &= ~whiteQueensideCastleMask;
-                    }
-                    if (start == 7 || target == 7)
-                    {
-                        newGameState &= ~whiteKingsideCastleMask;
-                    }
-                    if (start == 56 || target == 56)
-                    {
-                        newGameState &= ~blackQueensideCastleMask;
-                    }
-                    if (start == 63 || target == 63)
-                    {
-                        newGameState &= ~blackKingsideCastleMask;
-                    }
-
                     board[start] = Piece.NONE;
                     board[target] = piece;
                     break;
@@ -168,7 +201,7 @@ namespace Chess.Logic
                     pieceList.MovePieceToField(start, target, pieceType);
                     uint enPassantFile = (uint)target % 8;
                     newGameState |= (enPassantFile + 1) << 4;
-
+                    hash ^= Zobrist.enPassantFiles[enPassantFile];
                     board[start] = Piece.NONE;
                     board[target] = piece;
                     break;
@@ -181,6 +214,7 @@ namespace Chess.Logic
                     board[start] = Piece.NONE;
                     board[target] = piece;
                     board[capturedPawnField] = Piece.NONE;
+                    hash ^= Zobrist.GetPieceNum(Piece.PAWN, target, toStayKeys);
                     break;
                 case Move.Flag.Castling:
                     int rookStart;
@@ -188,12 +222,16 @@ namespace Chess.Logic
                     if (color == Piece.WHITE)
                     {
                         newGameState &= ~whiteKingsideCastleMask;
+                        hash = Zobrist.HashOutWhiteKingsideCastleMask(hash);
                         newGameState &= ~whiteQueensideCastleMask;
+                        hash = Zobrist.HashOutWhiteQueensideCastleMask(hash);
                     }
                     else
                     {
                         newGameState &= ~blackKingsideCastleMask;
+                        hash = Zobrist.HashOutBlackKingsideCastleMask(hash);
                         newGameState &= ~blackQueensideCastleMask;
+                        hash = Zobrist.HashOutBlackQueensideCastleMask(hash);
                     }
                     if (target > start)
                     {
@@ -205,6 +243,8 @@ namespace Chess.Logic
                         rookStart = start - 4;
                         rookTarget = start - 1;
                     }
+                    hash ^= toMoveKeys.rooks[rookStart];
+                    hash ^= toMoveKeys.rooks[rookTarget];
                     pieceList.MovePieceToField(start, target, pieceType);
                     pieceList.MovePieceToField(rookStart, rookTarget, Piece.ROOK);
                     uint rook = board[rookStart];
@@ -214,23 +254,6 @@ namespace Chess.Logic
                     board[rookTarget] = rook;
                     break;
                 case Move.Flag.PromoteToBishop:
-                    if (target == 0)
-                    {
-                        newGameState &= ~whiteQueensideCastleMask;
-                    }
-                    if (target == 7)
-                    {
-                        newGameState &= ~whiteKingsideCastleMask;
-                    }
-                    if (target == 56)
-                    {
-                        newGameState &= ~blackQueensideCastleMask;
-                    }
-                    if (target == 63)
-                    {
-                        newGameState &= ~blackKingsideCastleMask;
-                    }
-
                     if (board[target] != Piece.NONE)
                     {
                         uint enemyPiece = board[target];
@@ -238,28 +261,13 @@ namespace Chess.Logic
                         newGameState |= enemyPiece << 8;
                     }
                     pieceList.RemovePieceAtField(start, Piece.PAWN);
+                    hash ^= toMoveKeys.pawns[target];
+                    hash ^= toMoveKeys.bishops[target];
                     pieceList.AddPieceAtField(target, Piece.BISHOP);
                     board[start] = Piece.NONE;
                     board[target] = Piece.BISHOP + color;
                     break;
                 case Move.Flag.PromoteToRook:
-                    if (target == 0)
-                    {
-                        newGameState &= ~whiteQueensideCastleMask;
-                    }
-                    if (target == 7)
-                    {
-                        newGameState &= ~whiteKingsideCastleMask;
-                    }
-                    if (target == 56)
-                    {
-                        newGameState &= ~blackQueensideCastleMask;
-                    }
-                    if (target == 63)
-                    {
-                        newGameState &= ~blackKingsideCastleMask;
-                    }
-
                     if (board[target] != Piece.NONE)
                     {
                         uint enemyPiece = board[target];
@@ -268,27 +276,14 @@ namespace Chess.Logic
                     }
                     pieceList.RemovePieceAtField(start, Piece.PAWN);
                     pieceList.AddPieceAtField(target, Piece.ROOK);
+
+                    hash ^= toMoveKeys.pawns[target];
+                    hash ^= toMoveKeys.rooks[target];
+
                     board[start] = Piece.NONE;
                     board[target] = Piece.ROOK + color;
                     break;
                 case Move.Flag.PromoteToQueen:
-                    if (target == 0)
-                    {
-                        newGameState &= ~whiteQueensideCastleMask;
-                    }
-                    if (target == 7)
-                    {
-                        newGameState &= ~whiteKingsideCastleMask;
-                    }
-                    if (target == 56)
-                    {
-                        newGameState &= ~blackQueensideCastleMask;
-                    }
-                    if (target == 63)
-                    {
-                        newGameState &= ~blackKingsideCastleMask;
-                    }
-
                     if (board[target] != Piece.NONE)
                     {
                         uint enemyPiece = board[target];
@@ -297,27 +292,14 @@ namespace Chess.Logic
                     }
                     pieceList.RemovePieceAtField(start, Piece.PAWN);
                     pieceList.AddPieceAtField(target, Piece.QUEEN);
+
+                    hash ^= toMoveKeys.pawns[target];
+                    hash ^= toMoveKeys.queens[target];
+
                     board[start] = Piece.NONE;
                     board[target] = Piece.QUEEN + color;
                     break;
                 case Move.Flag.PromoteToKnight:
-                    if (target == 0)
-                    {
-                        newGameState &= ~whiteQueensideCastleMask;
-                    }
-                    if (target == 7)
-                    {
-                        newGameState &= ~whiteKingsideCastleMask;
-                    }
-                    if (target == 56)
-                    {
-                        newGameState &= ~blackQueensideCastleMask;
-                    }
-                    if (target == 63)
-                    {
-                        newGameState &= ~blackKingsideCastleMask;
-                    }
-
                     if (board[target] != Piece.NONE)
                     {
                         uint enemyPiece = board[target];
@@ -326,6 +308,10 @@ namespace Chess.Logic
                     }
                     pieceList.RemovePieceAtField(start, Piece.PAWN);
                     pieceList.AddPieceAtField(target, Piece.KNIGHT);
+
+                    hash ^= toMoveKeys.pawns[target];
+                    hash ^= toMoveKeys.knights[target];
+
                     board[start] = Piece.NONE;
                     board[target] = Piece.KNIGHT + color;
                     break;
@@ -428,6 +414,7 @@ namespace Chess.Logic
             }
 
             currentGameState = gameStateHistory.Pop();
+            hash = hashStack.Pop();
             ChangeSides();
         }
 
@@ -553,6 +540,130 @@ namespace Chess.Logic
             uint row = (uint)(fieldString[1] - '1');
 
             return row * 8 + col;
+        }
+        public static string getFENstring()
+        {
+            string fenString = "";
+            for (int row = 7; row >= 0; row--)
+            {
+                int emptyCount = 0;
+                for(int col = 0; col < 8; col++)
+                {
+                    int field = row * 8 + col;
+                    if (board[field] != Piece.NONE)
+                    {
+                        if (emptyCount != 0)
+                        {
+                            fenString += emptyCount.ToString();
+                            emptyCount = 0;
+                        }
+                        fenString += getPieceString(board[field]);
+                    }
+                    else
+                    {
+                        emptyCount++;
+                    }
+                }
+                if (emptyCount != 0)
+                {
+                    fenString += emptyCount.ToString();
+                }
+                else if (fenString[fenString.Length - 1] == '/')
+                {
+                    fenString += "8";
+                }
+                if (row != 0)
+                    fenString += "/";
+            }
+
+            fenString += " ";
+            if (toMove == Piece.WHITE)
+                fenString += "w";
+            else
+                fenString += "b";
+
+            fenString += " ";
+
+            bool castleAvailable = false;
+            if ((whiteKingsideCastleMask & currentGameState) != 0)
+            {
+                fenString += "K";
+                castleAvailable = true;
+            }
+            if ((whiteQueensideCastleMask & currentGameState) != 0)
+            {
+                fenString += "Q";
+                castleAvailable = true;
+            }
+            if ((blackKingsideCastleMask & currentGameState) != 0)
+            {
+                fenString += "k";
+                castleAvailable = true;
+            }
+            if ((blackQueensideCastleMask & currentGameState) != 0)
+            {
+                fenString += "q";
+                castleAvailable = true;
+            }
+            if(!castleAvailable)
+            {
+                fenString += "-";
+            }
+
+            fenString += " ";
+
+            if ((currentGameState & enPassantMask) != 0)
+            {
+                int enPassantFile = (int)((currentGameState & enPassantMask) >> 4) - 1;
+                fenString += (char)('a' + enPassantFile);
+                if(toMove == Piece.WHITE)
+                {
+                    fenString += "6";
+                }
+                else
+                {
+                    fenString += "3";
+                }
+            }
+            else
+            {
+                fenString += "-";
+            }
+
+            return fenString;
+        }
+
+        private static string getPieceString(uint piece)
+        {
+            string pieceString = "";
+            uint pieceType = Piece.GetPiece(piece);
+            switch(pieceType)
+            {
+                case Piece.PAWN:
+                    pieceString = "p";
+                    break;
+                case Piece.KNIGHT:
+                    pieceString = "n";
+                    break;
+                case Piece.KING:
+                    pieceString = "k";
+                    break;
+                case Piece.QUEEN:
+                    pieceString = "q";
+                    break;
+                case Piece.BISHOP:
+                    pieceString = "b";
+                    break;
+                case Piece.ROOK:
+                    pieceString = "r";
+                    break;
+            }
+            uint color = Piece.GetColor(piece);
+            if (color == Piece.WHITE)
+            {
+                pieceString = pieceString.ToUpper();
+            }
+            return pieceString;
         }
     }
 }

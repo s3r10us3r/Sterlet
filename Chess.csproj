@@ -90,6 +90,7 @@
     <Compile Include="gui\PieceImage.cs" />
     <Compile Include="Logic\PieceList.cs" />
     <Compile Include="Logic\PreComputations.cs" />
+    <Compile Include="Logic\Zobrist.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

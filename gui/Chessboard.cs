@@ -3,6 +3,7 @@ using Chess.Logic;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -299,16 +300,23 @@ namespace Chess.gui
 
             if (playerType == PlayerType.COMPUTER_PLAYER)
             {
+                ChooseEngineMove();
+            }
+        }
+
+        public async void ChooseEngineMove()
+        {
+            await Task.Run(() =>
+            {
+
                 Move move = sterlet.ChooseMove(moves);
                 if (move != null)
                 {
                     Board.MakeMove(move);
-                    UpdateBoard();
                 }
-            }
-
+            });
+            UpdateBoard();
         }
-
 
         public void Finish(string whoWon, string reason)
         {
@@ -320,5 +328,6 @@ namespace Chess.gui
             whiteTimer.Stop();
             blackTimer.Stop();
         }
+
     }
 }

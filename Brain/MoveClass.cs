@@ -64,8 +64,8 @@ namespace Chess.Brain
 
         public static bool IsCapture(Move move)
         {
-            PieceList enemyPieces = Board.toStay == Piece.WHITE ? Board.blackPieces : Board.whitePieces;
-            return move.MoveFlag == Move.Flag.EnPassantCapture || ((1UL << move.TargetSquare) & enemyPieces.allPieces) != 0;
+            ulong allPieces = Board.whitePieces.allPieces | Board.blackPieces.allPieces;
+            return move.MoveFlag == Move.Flag.EnPassantCapture || (((1UL << move.TargetSquare) & allPieces) != 0);
         }
     }
 }
