@@ -9,20 +9,105 @@ namespace Chess.Brain
     public partial class Sterlet
     {
         private int initialDepth;
-        private const double PAWN = 1, ROOK = 5, QUEEN = 9, BISHOP = 3.3, KNIGHT = 3.2;
+
+        private const int PAWN = 100, ROOK = 500, QUEEN = 900, BISHOP = 330, KNIGHT = 320;
+        private const int weightOfAllPieces = ROOK * 4 + QUEEN * 2 + BISHOP * 4 + KNIGHT * 4;
+
+        //the evaluation boards are set for black (they have to be inverted for white pieces)
+        private readonly int[] pawnPositions =
+        {
+            0,  0,  0,  0,  0,  0,  0,  0,
+            50, 50, 50, 50, 50, 50, 50, 50,
+            10, 10, 20, 30, 30, 20, 10, 10,
+            5,  5, 10, 25, 25, 10,  5,  5,
+            0,  0,  0, 20, 20,  0,  0,  0,
+            5, -5,-10,  0,  0,-10, -5,  5,
+            5, 10, 10,-20,-20, 10, 10,  5,
+            0,  0,  0,  0,  0,  0,  0,  0
+        };
+
+        private readonly int[] queenPositions =
+        {
+            -20,-10,-10, -5, -5,-10,-10,-20,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -10,  0,  5,  5,  5,  5,  0,-10,
+             -5,  0,  5,  5,  5,  5,  0, -5,
+              0,  0,  5,  5,  5,  5,  0, -5,
+            -10,  5,  5,  5,  5,  5,  0,-10,
+            -10,  0,  5,  0,  0,  0,  0,-10,
+            -20,-10,-10, -5, -5,-10,-10,-20
+        };
+
+        private readonly int[] knightPositions =
+        {
+            -50,-40,-30,-30,-30,-30,-40,-50,
+            -40,-20,  0,  0,  0,  0,-20,-40,
+            -30,  0, 10, 15, 15, 10,  0,-30,
+            -30,  5, 15, 20, 20, 15,  5,-30,
+            -30,  0, 15, 20, 20, 15,  0,-30,
+            -30,  5, 10, 15, 15, 10,  5,-30,
+            -40,-20,  0,  5,  5,  0,-20,-40,
+            -50,-40,-30,-30,-30,-30,-40,-50,
+        };
+
+        private readonly int[] bishopPositions =
+        {
+            -20,-10,-10,-10,-10,-10,-10,-20,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -10,  0,  5, 10, 10,  5,  0,-10,
+            -10,  5,  5, 10, 10,  5,  5,-10,
+            -10,  0, 10, 10, 10, 10,  0,-10,
+            -10, 10, 10, 10, 10, 10, 10,-10,
+            -10,  5,  0,  0,  0,  0,  5,-10,
+            -20,-10,-10,-10,-10,-10,-10,-20
+        };
+
+        private readonly int[] rookPositions =
+        {
+              0,  0,  0,  0,  0,  0,  0,  0,
+              5, 10, 10, 10, 10, 10, 10,  5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+             -5,  0,  0,  0,  0,  0,  0, -5,
+              0,  0,  0,  5,  5,  0,  0,  0
+        };
+
+        private readonly int[] middleGameKingPositions =
+        {
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -20,-30,-30,-40,-40,-30,-30,-20,
+            -10,-20,-20,-20,-20,-20,-20,-10,
+             20, 20,  0,  0,  0,  0, 20, 20,
+             20, 30, 10,  0,  0, 10, 30, 20
+        };
+
+        private readonly int[] endGameKingPositions =
+        {
+            -50,-40,-30,-20,-20,-30,-40,-50,
+            -30,-20,-10,  0,  0,-10,-20,-30,
+            -30,-10, 20, 30, 30, 20,-10,-30,
+            -30,-10, 30, 40, 40, 30,-10,-30,
+            -30,-10, 30, 40, 40, 30,-10,-30,
+            -30,-10, 20, 30, 30, 20,-10,-30,
+            -30,-30,  0,  0,  0,  0,-30,-30,
+            -50,-30,-30,-30,-30,-30,-30,-50
+        };
 
         private PieceList allyPieces;
         private PieceList enemyPieces;
         private uint allyColor;
         private uint enemyColor;
-        private Dictionary<ulong, double>[] transpositionTable;
-        private Dictionary<ulong, string>[] fenStringsTable;
+        private Dictionary<ulong, (int score, int depth)> transpositionTable;
 
         private readonly Predicate<Move> isCapture = move => MoveClassifier.IsCapture(move);
 
         private static int nodesVisited = 0;
         private static int transpositions = 0;
-        private static int errors = 0;
         public Sterlet(int depth, uint color)
         {
             this.initialDepth = depth;
@@ -40,32 +125,22 @@ namespace Chess.Brain
                 allyColor = Piece.BLACK;
                 enemyColor = Piece.WHITE;
             }
-            transpositionTable = new Dictionary<ulong, double>[initialDepth];
-            for(int i = 0; i < initialDepth; i++)
-            {
-                transpositionTable[i] = new Dictionary<ulong, double>();
-            }
+            transpositionTable = new Dictionary<ulong, (int score, int depth)>();
         }
 
         public Move ChooseMove(List<Move> moves)
         {
-            for (int i = 0; i < initialDepth; i++)
-            {
-                transpositionTable[i].Clear();
-            }
-
             Move chosenMove = null;
 
             nodesVisited = 0;
             transpositions = 0;
-            errors = 0;
-            double alpha = double.MinValue;
-            double beta = double.MaxValue;
+            int alpha = int.MinValue;
+            int beta = int.MaxValue;
             OrderMoves(moves);
             foreach(Move move in moves)
             {
                 Board.MakeMove(move);
-                double score = AlphaBetaMin(alpha, beta, initialDepth - 1);
+                int score = AlphaBetaMin(alpha, beta, initialDepth - 1);
                 if ( score >= beta )
                 {
                     Board.UnMakeMove();
@@ -80,26 +155,78 @@ namespace Chess.Brain
             }
             
 
-            Console.WriteLine($"VISITED NODES {nodesVisited} MOVE {chosenMove} EVALUATED AT {alpha} TRANSPOSITIONS {transpositions} ERRORS {errors}");
+            Console.WriteLine($"VISITED NODES {nodesVisited} MOVE {chosenMove} EVALUATED AT {alpha} TRANSPOSITIONS {transpositions}");
             int capturesNaive = 0;
             foreach(Move move in moves)
             {
                 if (MoveClassifier.IsCapture(move))
                     capturesNaive++;
             }
-            Console.WriteLine($"NAIVE EVAL {Evaluate()} NUMBER OF CAPTURES {moves.FindAll(isCapture).Count} NAIVE CAPTURES {capturesNaive}");
+            Console.WriteLine($"0-depth EVAL {Evaluate()} NUMBER OF CAPTURES {capturesNaive}");
             return chosenMove;
         }
 
 
-
-        public double Evaluate()
+        //evaluation values are heavily based on https://www.chessprogramming.org/Simplified_Evaluation_Function
+        private int Evaluate()
         {
             nodesVisited++;
-            return MaterialWeight(allyPieces) - MaterialWeight(enemyPieces);
+            double endGameWeight = (MaterialWeight(allyPieces) + MaterialWeight(enemyPieces) - 1600) / weightOfAllPieces;
+
+            int evaluation = MaterialWeight(allyPieces) - MaterialWeight(enemyPieces);
+
+            for (int i = 0; i < 64; i++)
+            {
+                uint piece = Board.board[i];
+                if (piece == Piece.NONE)
+                {
+                    continue;
+                }
+                int index = i;
+                //we use this despite the board not being symmetrical along y axis, because the evaluation boards are symmetrical along y axis
+                if (Piece.GetColor(piece) == Piece.WHITE)
+                {
+                    index = 63 - i;
+                }
+
+                uint pieceType = Piece.GetPiece(piece);
+                int score = 0;
+                switch (pieceType)
+                {
+                    case Piece.PAWN:
+                        score = pawnPositions[index];
+                        break;
+                    case Piece.KNIGHT:
+                        score = knightPositions[index];
+                        break;
+                    case Piece.BISHOP:
+                        score = bishopPositions[index];
+                        break;
+                    case Piece.QUEEN:
+                        score = queenPositions[index];
+                        break;
+                    case Piece.ROOK:
+                        score = rookPositions[index];
+                        break;
+                    case Piece.KING:
+                        score = (int)(middleGameKingPositions[index] * (1-endGameWeight) + endGameKingPositions[index] * endGameWeight);
+                        break;
+                }
+
+                if (Piece.GetColor(piece) != allyColor)
+                {
+                    score = -score;
+                }
+
+                evaluation += score;
+            }
+
+            return evaluation;
         }
 
-        private double AlphaBetaMin(double alpha, double beta, int depth)
+
+
+        private int AlphaBetaMin(int alpha, int beta, int depth)
         {
             if (depth == 0)
             {
@@ -108,23 +235,23 @@ namespace Chess.Brain
             List<Move> moves = MoveGenerator.GenerateMoves();
             if(moves.Count == 0)
             {
-                return -EvaluateGameState() * (depth);
+                return -EvaluateGameState() * depth;
             }
             OrderMoves(moves);
             foreach(Move move in moves)
             {
                 Board.MakeMove(move);
-                double score;
-                if (transpositionTable[depth - 1].ContainsKey(Board.hash))
+                int score;
+                if (transpositionTable.ContainsKey(Board.hash) && transpositionTable[Board.hash].depth >= depth)
                 {
                     transpositions++;
                     ulong hash = Board.hash;
-                    score = transpositionTable[depth - 1][hash];
+                    score = transpositionTable[hash].score;
                 }
                 else
                 {
                     score = AlphaBetaMax(alpha, beta, depth - 1);
-                    transpositionTable[depth - 1][Board.hash] = score;
+                    transpositionTable[Board.hash] = (score, depth);
                 }
                 if (score <= alpha)
                 {
@@ -140,7 +267,7 @@ namespace Chess.Brain
             return beta;
         }
 
-        private double AlphaBetaMax(double alpha, double beta, int depth)
+        private int AlphaBetaMax(int alpha, int beta, int depth)
         {
             if (depth == 0)
             {
@@ -155,17 +282,17 @@ namespace Chess.Brain
             foreach (Move move in moves)
             {
                 Board.MakeMove(move);
-                double score;
-                if (transpositionTable[depth - 1].ContainsKey(Board.hash))
+                int score;
+                if (transpositionTable.ContainsKey(Board.hash) && transpositionTable[Board.hash].depth >= depth)
                 {
                     transpositions++;
                     ulong hash = Board.hash;
-                    score = transpositionTable[depth - 1][hash];
+                    score = transpositionTable[hash].score;
                 }
                 else
                 {
                     score = AlphaBetaMin(alpha, beta, depth - 1);
-                    transpositionTable[depth - 1][Board.hash] = score;
+                    transpositionTable[Board.hash] = (score, depth);
                 }
                 if (score >= beta)
                 {
@@ -181,9 +308,9 @@ namespace Chess.Brain
             return alpha;
         }
 
-        private double AlphaBetaMinQuiscence(double alpha, double beta)
+        private int AlphaBetaMinQuiscence(int alpha, int beta)
         {
-            double eval = Evaluate();
+            int eval = Evaluate();
             if (eval <= alpha)
             {
                 return alpha;
@@ -202,7 +329,7 @@ namespace Chess.Brain
             foreach (Move move in moves)
             {
                 Board.MakeMove(move);
-                double score = AlphaBetaMaxQuiscence(alpha, beta);
+                int score = AlphaBetaMaxQuiscence(alpha, beta);
                 if (score <= alpha)
                 {
                     Board.UnMakeMove();
@@ -217,9 +344,9 @@ namespace Chess.Brain
             return beta;
         }
 
-        private double AlphaBetaMaxQuiscence(double alpha, double beta)
+        private int AlphaBetaMaxQuiscence(int alpha, int beta)
         {
-            double eval = Evaluate();
+            int eval = Evaluate();
             if (eval >= beta)
             {
                 return beta;
@@ -238,7 +365,7 @@ namespace Chess.Brain
             foreach (Move move in moves)
             {
                 Board.MakeMove(move);
-                double score = AlphaBetaMinQuiscence(alpha, beta);
+                int score = AlphaBetaMinQuiscence(alpha, beta);
                 if (score >= beta)
                 {
                     Board.UnMakeMove();
@@ -295,14 +422,14 @@ namespace Chess.Brain
             }
         }
 
-        //checks if player is mated
-        private double EvaluateGameState()
+        //checks for checkmates and stalemates
+        private int EvaluateGameState()
         {
             ulong enemyAttackMap = MoveGenerator.enemyAttackMap;
             ulong allyKingPosition = Board.toMove == Piece.WHITE ? Board.whitePieces.kingPosition : Board.blackPieces.kingPosition;
-            if((enemyAttackMap & allyKingPosition) != 0)
+            if ((enemyAttackMap & allyKingPosition) != 0)
             {
-                return -300;
+                return -30000;
             }
             else
             {
@@ -310,7 +437,7 @@ namespace Chess.Brain
             }
         }
 
-        private double MaterialWeight(PieceList pieces)
+        private int MaterialWeight(PieceList pieces)
         {
             int bishops = BitMagician.CountBits(pieces.diagonalSliders & ~pieces.orthogonalSliders);
             int rooks = BitMagician.CountBits(pieces.orthogonalSliders & ~pieces.diagonalSliders);

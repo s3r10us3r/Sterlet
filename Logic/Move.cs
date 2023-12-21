@@ -1,7 +1,8 @@
 ﻿namespace Chess.Logic
 {
+    //this is heavily based off of Sebastian LAgue's implementation https://github.com/SebLague/Chess-Coding-Adventure/tree/Chess-V1-Unity
 
-    //move is a ushort
+    //move is storad as a ushort
     public class Move
     {
         public readonly ushort value = 0;
