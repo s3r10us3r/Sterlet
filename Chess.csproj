@@ -65,6 +65,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Compile Include="Abstracts\Player.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -77,6 +78,7 @@
     <Compile Include="Game.xaml.cs">
       <DependentUpon>Game.xaml</DependentUpon>
     </Compile>
+    <Compile Include="gui\HumanPlayer.cs" />
     <Compile Include="gui\PlayerType.cs" />
     <Compile Include="gui\PromotionMenu.cs" />
     <Compile Include="gui\Timer.cs" />

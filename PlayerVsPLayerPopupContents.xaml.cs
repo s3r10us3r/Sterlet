@@ -44,7 +44,7 @@ namespace Chess
 
         private void PlayClicked(object sender, RoutedEventArgs e)
         {
-            ((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, PlayerType.HUMAN_PLAYER, PlayerType.HUMAN_PLAYER, optionsList[timeIndex]));
+            ((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, new HumanPlayer(), new HumanPlayer(), optionsList[timeIndex]));
         }
     }
 }

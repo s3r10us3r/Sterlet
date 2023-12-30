@@ -1,4 +1,6 @@
-﻿using Chess.BitMagic;
+﻿using Chess.Abstracts;
+using Chess.BitMagic;
+using Chess.gui;
 using Chess.Logic;
 using System;
 using System.Collections.Generic;
@@ -6,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Chess.Brain
 {
-    public partial class Sterlet
+    public partial class Sterlet : Player
     {
         private int initialDepth;
 
@@ -100,8 +102,8 @@ namespace Chess.Brain
 
         private PieceList allyPieces;
         private PieceList enemyPieces;
-        private uint allyColor;
-        private uint enemyColor;
+        private readonly uint allyColor;
+        private readonly uint enemyColor;
         private Dictionary<ulong, (int score, int depth)> transpositionTable;
 
         private readonly Predicate<Move> isCapture = move => MoveClassifier.IsCapture(move);
@@ -113,23 +115,34 @@ namespace Chess.Brain
             this.initialDepth = depth;
             if (color == Piece.WHITE)
             {
-                allyPieces = Board.whitePieces;
-                enemyPieces = Board.blackPieces;
                 allyColor = Piece.WHITE;
                 enemyColor = Piece.BLACK;
             }
             else
             {
-                allyPieces = Board.blackPieces;
-                enemyPieces = Board.whitePieces;
                 allyColor = Piece.BLACK;
                 enemyColor = Piece.WHITE;
             }
             transpositionTable = new Dictionary<ulong, (int score, int depth)>();
         }
 
-        public Move ChooseMove(List<Move> moves)
+        public void setUp()
         {
+            if (allyColor == Piece.WHITE)
+            {
+                allyPieces = Board.whitePieces;
+                enemyPieces = Board.blackPieces;
+            }
+            else
+            {
+                allyPieces = Board.blackPieces;
+                enemyPieces = Board.whitePieces;
+            }
+        }
+
+        public override Move ChooseMove()
+        {
+            List<Move> moves = MoveGenerator.GenerateMoves();
             Move chosenMove = null;
 
             nodesVisited = 0;
@@ -165,6 +178,8 @@ namespace Chess.Brain
             Console.WriteLine($"0-depth EVAL {Evaluate()} NUMBER OF CAPTURES {capturesNaive}");
             return chosenMove;
         }
+
+        
 
 
         //evaluation values are heavily based on https://www.chessprogramming.org/Simplified_Evaluation_Function
@@ -464,6 +479,15 @@ namespace Chess.Brain
                     return BISHOP;
             }
             return 0;
+        }
+
+        public override PieceImage GetPiece(uint piece, int field)
+        {
+            return new PieceImage(piece, field);
+        }
+
+        public override void RemovePiece(PieceImage piece)
+        {
         }
     }
 }

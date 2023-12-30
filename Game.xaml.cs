@@ -1,4 +1,5 @@
-﻿using Chess.gui;
+﻿using Chess.Abstracts;
+using Chess.gui;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -11,7 +12,7 @@ namespace Chess
     {
         private readonly ChessBoard chessBoard;
 
-        public Game(string FEN, PlayerType whitePlayerType, PlayerType blackPlayerType, TimerOptions timerOptions)
+        public Game(string FEN, Player whitePlayer, Player blackPlayer, TimerOptions timerOptions)
         {
             InitializeComponent();
 
@@ -25,7 +26,7 @@ namespace Chess
             }
 
             Logic.Board.ReadFEN(FEN);
-            chessBoard = new ChessBoard(whitePlayerType, blackPlayerType, timerWhite, timerBlack, whoWonText, reasonText);
+            chessBoard = new ChessBoard(whitePlayer, blackPlayer, timerWhite, timerBlack, whoWonText, reasonText);
             chessBoardBorder.Child = chessBoard;
             timerWhite.ChessBoard = chessBoard;
             timerBlack.ChessBoard = chessBoard;

@@ -1,5 +1,6 @@
-﻿using Chess.gui;
-using System;
+﻿using Chess.Brain;
+using Chess.gui;
+using Chess.Logic;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -23,29 +24,7 @@ namespace Chess
         private void PlayerVsMachine_Click(object sender, RoutedEventArgs e)
         {
             //popup.IsOpen = true;
-            ((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, PlayerType.HUMAN_PLAYER, PlayerType.COMPUTER_PLAYER, new TimerOptions(TimerOptions.Options.NoTime)));
-        }
-
-        private void TimePlusClicked(object sender, RoutedEventArgs e)
-        {
-            Console.WriteLine("+ clicked");
-        }
-
-        private void TimeMinusClicked(object sender, RoutedEventArgs e)
-        {
-            Console.WriteLine("- clicked");
-        }
-
-        private void DiffPlusClicked(object sender, RoutedEventArgs e)
-        {
-            Console.WriteLine("+ clicked");
-        }
-
-        private void DiffMinusClicked(object sender, RoutedEventArgs e)
-        {
-            Console.WriteLine("- clicked");
+            ((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, new HumanPlayer(), new Sterlet(5, Piece.BLACK), new TimerOptions(TimerOptions.Options.NoTime)));
         }
     }
-
-   
 }

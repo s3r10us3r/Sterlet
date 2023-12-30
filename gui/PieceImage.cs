@@ -1,4 +1,5 @@
-﻿using Chess.Logic;
+﻿using Chess.Abstracts;
+using Chess.Logic;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -18,11 +19,10 @@ namespace Chess.gui
 
         private readonly string CHESS_PIECES_PATH = @"\Resources\chess_pieces\";
 
-        protected ChessBoard parent;
-        protected uint piece;
+        public readonly uint piece;
         public int field;
 
-        public PieceImage(uint piece, int field, ChessBoard parent) : base()
+        public PieceImage(uint piece, int field) : base()
         {
             this.piece = piece;
             LoadImage(piece);
@@ -31,7 +31,6 @@ namespace Chess.gui
             this.Height = 60;
 
             this.field = field;
-            this.parent = parent;
         }
 
         private void LoadImage(uint piece)
@@ -50,11 +49,6 @@ namespace Chess.gui
             bitmap.EndInit();
             this.Source = bitmap;
         }
-
-        protected void MoveOnBoard(int oldField, int newField)
-        {
-            parent.MovePieceOnBoard(oldField, newField);
-        }
     }
 
     public class PlayerControlledPiece : PieceImage
@@ -63,25 +57,38 @@ namespace Chess.gui
         private Point initialMousePosition;
         private TranslateTransform transform = new TranslateTransform();
         protected List<Move> availableMoves;
+        private bool isLocked = true;
+        private HumanPlayer parent;
 
-        public PlayerControlledPiece(uint piece, int field, ChessBoard parent) : base(piece, field, parent)
+        public PlayerControlledPiece(uint piece, int field, HumanPlayer parent) : base(piece, field)
         {
+            this.parent = parent;
             RenderTransform = transform;
             PreviewMouseDown += PlayerControlledPiece_PreviewMouseDown;
             PreviewMouseMove += PlayerControlledPiece_PreviewMouseMove;
             PreviewMouseUp += PlayerControlledPiece_PreviewMouseUp;
         }
 
+        public void UnlockDragging()
+        {
+            isLocked = false;
+        }
+
+        public void LockDragging()
+        {
+            isLocked = true;
+        }
+
         private void PlayerControlledPiece_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left && !PromotionMenu.isOpened)
+            if (e.ChangedButton == MouseButton.Left && !PromotionMenu.isOpened && !isLocked)
             {
                 uint color = Piece.GetColor(piece);
 
                 availableMoves = GetAvailableMoves();
                 isDragging = true;
 
-                parent.HighlightFields(GetFieldsToHighlight());
+                //parent.HighlightFields(GetFieldsToHighlight());
                 initialMousePosition = e.GetPosition(Application.Current.MainWindow);
                 CaptureMouse();
             }
@@ -104,7 +111,7 @@ namespace Chess.gui
             {
                 isDragging = false;
                 ReleaseMouseCapture();
-                parent.StopHighlightingFields(GetFieldsToHighlight());
+               // parent.StopHighlightingFields(GetFieldsToHighlight());
 
                 double deltaX = transform.X;
                 double deltaY = transform.Y;
@@ -133,9 +140,8 @@ namespace Chess.gui
                 if (movesThatCouldBeMade.Count == 1)
                 {
                     Move move = movesThatCouldBeMade[0];
-                    Board.MakeMove(move);
                     Console.WriteLine(move);
-                    parent.UpdateBoard();
+                    parent.SetChosenMove(move);
                 }
                 else if (movesThatCouldBeMade.Count > 1)
                 {
@@ -161,8 +167,8 @@ namespace Chess.gui
                     {
                         if (move.MoveFlag == promotionFlag)
                         {
-                            Board.MakeMove(move);
-                            parent.UpdateBoard();
+                            Console.WriteLine(move);
+                            parent.SetChosenMove(move);
                             break;
                         }
                     }
@@ -175,7 +181,7 @@ namespace Chess.gui
         {
             List<Move> availableMoves = new List<Move>();
 
-            foreach (Move move in parent.moves)
+            foreach (Move move in parent.AvailableMoves)
             {
                 if (move.StartSquare == field)
                 {
