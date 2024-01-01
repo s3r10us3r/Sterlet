@@ -78,6 +78,7 @@
     <Compile Include="Game.xaml.cs">
       <DependentUpon>Game.xaml</DependentUpon>
     </Compile>
+    <Compile Include="gui\GameSingleton.cs" />
     <Compile Include="gui\HumanPlayer.cs" />
     <Compile Include="gui\PlayerType.cs" />
     <Compile Include="gui\PromotionMenu.cs" />

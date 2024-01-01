@@ -1,5 +1,4 @@
-﻿using Chess.Abstracts;
-using Chess.Logic;
+﻿using Chess.Logic;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -88,7 +87,7 @@ namespace Chess.gui
                 availableMoves = GetAvailableMoves();
                 isDragging = true;
 
-                //parent.HighlightFields(GetFieldsToHighlight());
+                GameSingleton.chessBoard.HighlightFields(GetFieldsToHighlight());
                 initialMousePosition = e.GetPosition(Application.Current.MainWindow);
                 CaptureMouse();
             }
@@ -111,7 +110,7 @@ namespace Chess.gui
             {
                 isDragging = false;
                 ReleaseMouseCapture();
-               // parent.StopHighlightingFields(GetFieldsToHighlight());
+                GameSingleton.chessBoard.StopHighlightingFields(GetFieldsToHighlight());
 
                 double deltaX = transform.X;
                 double deltaY = transform.Y;
@@ -123,9 +122,6 @@ namespace Chess.gui
                 (oldRow, oldCol) = ChessBoard.FieldToRowCol(field);
                 int newRow = oldRow + rowChange;
                 int newCol = oldCol + colChange;
-
-                transform.X = 0;
-                transform.Y = 0;
 
                 int newField = ChessBoard.RowColToFieldNumber(newRow, newCol);
 
@@ -173,7 +169,11 @@ namespace Chess.gui
                         }
                     }
                 }
-
+                else
+                {
+                    transform.X = 0;
+                    transform.Y = 0;
+                }
             }
         }
 

@@ -21,6 +21,8 @@ namespace Chess.gui
         private readonly SolidColorBrush BLACK_FIELDS_COLOR = Brushes.DarkGreen;
         private readonly SolidColorBrush WHITE_HIGHLITED_COLOR = new SolidColorBrush(Color.FromRgb(255, 200, 150));
         private readonly SolidColorBrush BLACK_HIGHLITED_COLOR = new SolidColorBrush(Color.FromRgb(100, 100, 0));
+        private readonly SolidColorBrush WHITE_LAST_MOVE_COLOR = new SolidColorBrush(Color.FromRgb(112, 112, 10));
+        private readonly SolidColorBrush BLACK_LAST_MOVE_COLOR = new SolidColorBrush(Color.FromRgb(102, 102, 0));
         
         private PieceImage[] boardArray = new PieceImage[64];
         private Border[,] fieldArray = new Border[8, 8];
@@ -34,6 +36,8 @@ namespace Chess.gui
         private readonly TextBlock reasonText;
 
         private uint[] boardRepresentation = (uint[])Board.board.Clone();
+
+        private (int start, int end) lastMoveFields;
 
         private bool blocked = false;
 
@@ -65,23 +69,16 @@ namespace Chess.gui
             this.HorizontalAlignment = HorizontalAlignment.Center;
             this.VerticalAlignment = VerticalAlignment.Center;
 
-
+            GameSingleton.chessBoard = this;
             SetUpFromBoard();
-
-            //this is akward and has to be changed!
-            if (whitePlayer is Sterlet)
-            {
-                ((Sterlet)whitePlayer).setUp();
-            }
-            if (blackPlayer is Sterlet)
-            {
-                ((Sterlet)blackPlayer).setUp();
-            }
             GetMoveFromPlayer(Board.toMove == Piece.WHITE ? whitePlayer : blackPlayer);
         }
 
         public void Invert()
         {
+            StopHighlightingField(lastMoveFields.start);
+            StopHighlightingField(lastMoveFields.end);
+
             isInverted = !isInverted;
             foreach (PieceImage pieceImage in boardArray)
             {
@@ -93,6 +90,9 @@ namespace Chess.gui
                     SetColumn(pieceImage, newCol);
                 }
             }
+
+            HighlightLastMoveField(lastMoveFields.start);
+            HighlightLastMoveField(lastMoveFields.end);
         }
 
         private void AddRow()
@@ -220,31 +220,61 @@ namespace Chess.gui
             if (blocked)
                 return;
 
-            int row, col;
             foreach (int field in fields)
             {
-                (row, col) = FieldToRowCol(field);
-                SolidColorBrush highlightedColor = (row + col) % 2 == 0 ? WHITE_HIGHLITED_COLOR : BLACK_HIGHLITED_COLOR;
-
-                Border square = fieldArray[row, col];
-                square.Background = highlightedColor;
+                if (field != lastMoveFields.start && field != lastMoveFields.end)
+                {
+                    HighlightField(field);
+                }
             }
         }
 
         public void StopHighlightingFields(List<int> fields)
         {
-            if (blocked)
-                return;
-
-            int row, col;
             foreach (int field in fields)
             {
-                (row, col) = FieldToRowCol(field);
-                SolidColorBrush color = (row + col) % 2 == 0 ? WHITE_FIELDS_COLOR : BLACK_FIELDS_COLOR;
-
-                Border square = fieldArray[row, col];
-                square.Background = color;
+                if (field != lastMoveFields.start && field != lastMoveFields.end)
+                {
+                    StopHighlightingField(field);
+                }
             }
+        }
+
+        private void HighlightLastMoveField(int field)
+        {
+            (int row, int col) = FieldToRowCol(field);
+            SolidColorBrush highlightedColor = (row + col) % 2 == 0 ? WHITE_LAST_MOVE_COLOR : BLACK_LAST_MOVE_COLOR;
+
+            Border square = fieldArray[row, col];
+            square.Background = highlightedColor;
+        }
+
+        private void StopHighlightingField(int field)
+        {
+            (int row, int col) = FieldToRowCol(field);
+            SolidColorBrush color = (row + col) % 2 == 0 ? WHITE_FIELDS_COLOR : BLACK_FIELDS_COLOR;
+
+            Border square = fieldArray[row, col];
+            square.Background = color;
+        }
+
+
+        private void HighlightField(int field)
+        {
+            (int row, int col) = FieldToRowCol(field);
+            SolidColorBrush highlightedColor = (row + col) % 2 == 0 ? WHITE_HIGHLITED_COLOR : BLACK_HIGHLITED_COLOR;
+
+            Border square = fieldArray[row, col];
+            square.Background = highlightedColor;
+        }
+
+        private void HighlightLastMove(Move move)
+        {
+            StopHighlightingField(lastMoveFields.start);
+            StopHighlightingField(lastMoveFields.end);
+            lastMoveFields = (move.StartSquare, move.TargetSquare);
+            HighlightLastMoveField(lastMoveFields.start);
+            HighlightLastMoveField(lastMoveFields.end);
         }
 
         public void UpdateBoard()
@@ -308,14 +338,16 @@ namespace Chess.gui
         public async void GetMoveFromPlayer(Player player)
         {
             Console.WriteLine("This was called");
+            Move move = null;
             await Task.Run(() =>
             {
-                Move move = player.ChooseMove();
+                move = player.ChooseMove();
                 if (move != null)
                 {
                     Board.MakeMove(move);
                 }
             });
+            HighlightLastMove(move);
             UpdateBoard();
         }
 

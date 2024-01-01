@@ -1,5 +1,7 @@
 ﻿using Chess.Abstracts;
+using Chess.Brain;
 using Chess.gui;
+using Chess.Logic;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -12,12 +14,12 @@ namespace Chess
     {
         private readonly ChessBoard chessBoard;
 
-        public Game(string FEN, Player whitePlayer, Player blackPlayer, TimerOptions timerOptions)
+        public Game(string FEN, PlayerType whitePlayerType, PlayerType blackPlayerType, TimerOptions timerOptions)
         {
             InitializeComponent();
 
-            Timer timerWhite = new Timer(timerOptions, whiteTimer, Logic.Piece.WHITE);
-            Timer timerBlack = new Timer(timerOptions, blackTimer, Logic.Piece.BLACK);
+            Timer timerWhite = new Timer(timerOptions, whiteTimer, Piece.WHITE);
+            Timer timerBlack = new Timer(timerOptions, blackTimer, Piece.BLACK);
 
             if (timerOptions.Option == TimerOptions.Options.NoTime)
             {
@@ -25,7 +27,27 @@ namespace Chess
                 blackTimerBorder.Visibility = Visibility.Hidden;
             }
 
-            Logic.Board.ReadFEN(FEN);
+            Board.ReadFEN(FEN);
+            Player whitePlayer;
+            if (whitePlayerType == PlayerType.HUMAN_PLAYER)
+            {
+                whitePlayer = new HumanPlayer();
+            }
+            else
+            {
+                whitePlayer = new Sterlet(5, Piece.WHITE);
+            }
+
+            Player blackPlayer;
+            if (blackPlayerType == PlayerType.HUMAN_PLAYER)
+            {
+                blackPlayer = new HumanPlayer();
+            }
+            else
+            {
+                blackPlayer = new Sterlet(5, Piece.BLACK);
+            }
+
             chessBoard = new ChessBoard(whitePlayer, blackPlayer, timerWhite, timerBlack, whoWonText, reasonText);
             chessBoardBorder.Child = chessBoard;
             timerWhite.ChessBoard = chessBoard;

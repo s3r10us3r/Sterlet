@@ -117,27 +117,17 @@ namespace Chess.Brain
             {
                 allyColor = Piece.WHITE;
                 enemyColor = Piece.BLACK;
-            }
-            else
-            {
-                allyColor = Piece.BLACK;
-                enemyColor = Piece.WHITE;
-            }
-            transpositionTable = new Dictionary<ulong, (int score, int depth)>();
-        }
-
-        public void setUp()
-        {
-            if (allyColor == Piece.WHITE)
-            {
                 allyPieces = Board.whitePieces;
                 enemyPieces = Board.blackPieces;
             }
             else
             {
+                allyColor = Piece.BLACK;
+                enemyColor = Piece.WHITE;
                 allyPieces = Board.blackPieces;
                 enemyPieces = Board.whitePieces;
             }
+            transpositionTable = new Dictionary<ulong, (int score, int depth)>();
         }
 
         public override Move ChooseMove()

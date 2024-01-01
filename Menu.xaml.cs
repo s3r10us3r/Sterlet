@@ -24,7 +24,7 @@ namespace Chess
         private void PlayerVsMachine_Click(object sender, RoutedEventArgs e)
         {
             //popup.IsOpen = true;
-            ((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, new HumanPlayer(), new Sterlet(5, Piece.BLACK), new TimerOptions(TimerOptions.Options.NoTime)));
+            ((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, PlayerType.HUMAN_PLAYER, PlayerType.COMPUTER_PLAYER, new TimerOptions(TimerOptions.Options.NoTime)));
         }
     }
 }
