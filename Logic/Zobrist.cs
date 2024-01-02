@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Chess.Logic
 {
@@ -20,7 +16,7 @@ namespace Chess.Logic
         public static Keys blackKeys;
         static Zobrist()
         {
-            Random rand = new Random(325519);
+            Random rand = new Random(2137420);
 
             whiteKeys = new Keys(rand);
             blackKeys = new Keys(rand);
