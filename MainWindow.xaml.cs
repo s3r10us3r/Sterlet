@@ -10,6 +10,7 @@ namespace Chess
     {
         public MainWindow()
         {
+            MainWindowSingleton.mainWindow = this;
             InitializeComponent();
             mainFrame.Content = new Menu();
             Application.Current.MainWindow = this;

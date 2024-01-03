@@ -1,22 +1,130 @@
-﻿using System;
+﻿using Chess.gui;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Chess
 {
     public partial class PlayerVsMachinePopupContents : UserControl
     {
+        private const int WHITE = 0;
+        private const int BLACK = 1;
+
+        private const int EASY = 1, MEDIUM = 2, HARD = 3;
+
+        private const string whitePawnSource = "Resources/chess_pieces/white_pawn.png";
+        private const string blackPawnSource = "Resources/chess_pieces/black_pawn.png";
+
+        private int chosenColor = WHITE;
+        private int chosenDifficulty = EASY;
+
+        private readonly List<TimerOptions> optionsList = new List<TimerOptions>
+        {
+            new TimerOptions(TimerOptions.Options.OneMinute), new TimerOptions(TimerOptions.Options.OnePlusOne), new TimerOptions(TimerOptions.Options.TwoPlusOne), //bullet
+            new TimerOptions(TimerOptions.Options.ThreeMinutes), new TimerOptions(TimerOptions.Options.ThreePlusTwo), new TimerOptions(TimerOptions.Options.FiveMinutes), //blitz
+            new TimerOptions(TimerOptions.Options.TenMinutes), new TimerOptions(TimerOptions.Options.FifteenPlusTen), new TimerOptions(TimerOptions.Options.ThirtyMinutes), //rapid
+            new TimerOptions(TimerOptions.Options.NoTime)
+        };
+        private int timeIndex = 6;
+
+        private void TimeUpClicked(object sender, RoutedEventArgs e)
+        {
+            if (timeIndex + 1 < optionsList.Count)
+            {
+                timeIndex++;
+                timeTextBlock.Text = optionsList[timeIndex].GetOptionString();
+            }
+        }
+
+        private void TimeDownClicked(object sender, RoutedEventArgs e)
+        {
+            if (timeIndex > 0)
+            {
+                timeIndex--;
+                timeTextBlock.Text = optionsList[timeIndex].GetOptionString();
+            }
+        }
+
+        private void UpdateDifficulty()
+        {
+            if (chosenDifficulty == EASY)
+            {
+                difficultyTextBox.Text = "EASY";
+            }
+            if (chosenDifficulty == MEDIUM)
+            {
+                difficultyTextBox.Text = "MEDIUM";
+            }
+            if (chosenDifficulty == HARD)
+            {
+                difficultyTextBox.Text = "HARD";
+            }
+        }
+
+        private void DiffciultyUpClicked(object sender, RoutedEventArgs e)
+        {
+            if (chosenDifficulty < 3)
+            {
+                chosenDifficulty++;
+                UpdateDifficulty();
+            }
+        }
+
+        private void DifficultyDownClicked(object sender, RoutedEventArgs e)
+        {
+            if (chosenDifficulty > 1)
+            {
+                chosenDifficulty--;
+                UpdateDifficulty();
+            }
+        }
+
+        private void SwitchColor(object sender, RoutedEventArgs e)
+        {
+            if (chosenColor == WHITE)
+            {
+                chosenColor = BLACK;
+                BitmapImage bitmap = new BitmapImage();
+                bitmap.BeginInit();
+
+                bitmap.UriSource = new Uri(blackPawnSource, UriKind.Relative);
+                bitmap.EndInit();
+                colorButton.Source = bitmap;
+            }
+            else if (chosenColor == BLACK)
+            {
+                chosenColor = WHITE;
+                BitmapImage bitmap = new BitmapImage();
+                bitmap.BeginInit();
+
+                bitmap.UriSource = new Uri(whitePawnSource, UriKind.Relative);
+                bitmap.EndInit();
+                colorButton.Source = bitmap;
+            }
+        }
+
+        private void PlayClicked(object sender, RoutedEventArgs e)
+        {
+            PlayerType whitePlayerType;
+            PlayerType blackPlayerType;
+
+            if (chosenColor == WHITE)
+            {
+                whitePlayerType = PlayerType.HUMAN_PLAYER;
+                blackPlayerType = PlayerType.COMPUTER_PLAYER;
+            }
+            else
+            {
+                whitePlayerType = PlayerType.COMPUTER_PLAYER;
+                blackPlayerType = PlayerType.HUMAN_PLAYER;
+            }
+
+            MainWindowSingleton.mainWindow.ChangePage(new Game(Logic.Board.STARTING_POSITION, whitePlayerType, blackPlayerType, optionsList[timeIndex]));
+        }
+
         public PlayerVsMachinePopupContents()
         {
             InitializeComponent();

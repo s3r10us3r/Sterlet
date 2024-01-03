@@ -71,6 +71,12 @@ namespace Chess.gui
 
             GameSingleton.chessBoard = this;
             SetUpFromBoard();
+
+            if (whitePlayer is Sterlet && blackPlayer is HumanPlayer)
+            {
+                Invert();
+            }
+
             GetMoveFromPlayer(Board.toMove == Piece.WHITE ? whitePlayer : blackPlayer);
         }
 

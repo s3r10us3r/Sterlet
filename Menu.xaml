@@ -31,8 +31,12 @@
             </Button.Background>
         </Button>
 
-        <Popup x:Name="popup"  IsOpen="False" Placement="Center">
+        <Popup x:Name="playerVsPlayerPopup"  IsOpen="False" Placement="Center">
             <local:PlayerVsPLayerPopupContents/>
+        </Popup>
+
+        <Popup x:Name="playerVsMachinePopup" IsOpen="False" Placement="Center">
+            <local:PlayerVsMachinePopupContents/>
         </Popup>
         
         <Border Grid.Row="3"  x:Name="Footer" VerticalAlignment="Center" Height="50">

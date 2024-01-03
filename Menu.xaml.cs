@@ -18,13 +18,13 @@ namespace Chess
 
         private void PlayerVsPlayer_Click(object sender, RoutedEventArgs e)
         {
-            popup.IsOpen = true;
+            playerVsPlayerPopup.IsOpen = true;
         }
 
         private void PlayerVsMachine_Click(object sender, RoutedEventArgs e)
         {
-            //popup.IsOpen = true;
-            ((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, PlayerType.COMPUTER_PLAYER, PlayerType.HUMAN_PLAYER, new TimerOptions(TimerOptions.Options.NoTime)));
+            playerVsMachinePopup.IsOpen = true;
+            //((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, PlayerType.COMPUTER_PLAYER, PlayerType.HUMAN_PLAYER, new TimerOptions(TimerOptions.Options.NoTime)));
         }
     }
 }
