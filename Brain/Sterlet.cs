@@ -137,47 +137,63 @@ namespace Chess.Brain
         public override Move ChooseMove()
         {
             List<Move> moves = MoveGenerator.GenerateMoves();
-            Move chosenMove = null;
             if (inOpening)
             {
-                if (Board.moveHistory.Count != 0)
+                Move chosenMove = GetMoveFromBook(moves);
+                if (chosenMove != null)
                 {
-                    book.MakeMove(Board.moveHistory.Peek());
-                    string moveString = book.GetNextMove();
+                    return chosenMove;
+                }
+                inOpening = false;
+            }
 
-                    if (moveString == null)
+            return Search(moves, initialDepth);
+        }
+
+        
+
+        private Move GetMoveFromBook(List<Move> moves)
+        {
+            if (Board.moveHistory.Count != 0)
+            {
+                book.MakeMove(Board.moveHistory.Peek());
+                string moveString = book.GetNextMove();
+
+                if (moveString == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    foreach (Move move in moves)
                     {
-                        inOpening = false;
-                    }
-                    else
-                    {
-                        foreach (Move move in moves)
+                        if (move.ToString() == moveString)
                         {
-                            if (move.ToString() == moveString)
-                            {
-                                book.MakeMove(move);
-                                Console.WriteLine("book move");
-                                return move;
-                            }
+                            book.MakeMove(move);
+                            Console.WriteLine("book move");
+                            return move;
                         }
-                        inOpening = false;
                     }
                 }
             }
 
-            
-            
+            return null;
+        }
 
+
+        private Move Search(List<Move> moves, int depth)
+        {
+            Move chosenMove = null;
             nodesVisited = 0;
             transpositions = 0;
             int alpha = int.MinValue;
             int beta = int.MaxValue;
             OrderMoves(moves);
-            foreach(Move move in moves)
+            foreach (Move move in moves)
             {
                 Board.MakeMove(move);
-                int score = AlphaBetaMin(alpha, beta, initialDepth - 1);
-                if ( score >= beta )
+                int score = AlphaBetaMin(alpha, beta, depth - 1);
+                if (score >= beta)
                 {
                     Board.UnMakeMove();
                     break;
@@ -189,21 +205,14 @@ namespace Chess.Brain
                 }
                 Board.UnMakeMove();
             }
-            
+
 
             Console.WriteLine($"VISITED NODES {nodesVisited} MOVE {chosenMove} EVALUATED AT {alpha} TRANSPOSITIONS {transpositions}");
             int capturesNaive = 0;
-            foreach(Move move in moves)
-            {
-                if (MoveClassifier.IsCapture(move))
-                    capturesNaive++;
-            }
+
             Console.WriteLine($"0-depth EVAL {Evaluate()} NUMBER OF CAPTURES {capturesNaive}");
             return chosenMove;
         }
-
-        
-
 
         //evaluation values are heavily based on https://www.chessprogramming.org/Simplified_Evaluation_Function
         private int Evaluate()
@@ -428,14 +437,16 @@ namespace Chess.Brain
                 uint movingPiece = Board.board[move.StartSquare];
                 uint capturedPiece = Board.board[move.TargetSquare];
 
-                if(capturedPiece != Piece.NONE)
+                //here we want captures to ALWAYS go first even tough it might seem that higher piece capturing lower piece is usually a bad move, bad captures will be cut quickly and the approach where we place nonCaptures last leads to best move being searched last quite often
+                if (capturedPiece != Piece.NONE)
                 {
-                    score = 10 * (GetPieceValue(capturedPiece) - GetPieceValue(movingPiece));
+                    score = 10 * GetPieceValue(capturedPiece) - GetPieceValue(movingPiece);
                 }
 
+                //this is because flags with higher value than PawnTwoForward are promotions 
                 if (move.MoveFlag > Move.Flag.PawnTwoForward)
                 {
-                    score += QUEEN;
+                    score += 10 * QUEEN;
                 }
 
                 ulong targetBitboard = 1UL << move.TargetSquare;
