@@ -72,6 +72,7 @@
     </Compile>
     <Compile Include="BitMagic\BitMagician.cs" />
     <Compile Include="Brain\MoveClass.cs" />
+    <Compile Include="Brain\OpeningBook.cs" />
     <Compile Include="Brain\Referee.cs" />
     <Compile Include="Brain\Sterlet.cs" />
     <Compile Include="Exceptions\InvalidMoveException.cs" />
@@ -160,6 +161,9 @@
     <Resource Include="Resources\chess_pieces\white_pawn.png" />
     <Resource Include="Resources\chess_pieces\white_queen.png" />
     <Resource Include="Resources\chess_pieces\white_rook.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\book.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

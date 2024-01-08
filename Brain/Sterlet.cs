@@ -4,13 +4,15 @@ using Chess.gui;
 using Chess.Logic;
 using System;
 using System.Collections.Generic;
-
+using System.IO;
 
 namespace Chess.Brain
 {
     public partial class Sterlet : Player
     {
         private int initialDepth;
+        private OpeningBook book;
+        //private readonly string bookPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "book.txt");
 
         private const int PAWN = 100, ROOK = 500, QUEEN = 900, BISHOP = 330, KNIGHT = 320;
         private const int weightOfAllPieces = ROOK * 4 + QUEEN * 2 + BISHOP * 4 + KNIGHT * 4;
@@ -110,6 +112,7 @@ namespace Chess.Brain
 
         private static int nodesVisited = 0;
         private static int transpositions = 0;
+        bool inOpening = true;
         public Sterlet(int depth, uint color)
         {
             this.initialDepth = depth;
@@ -128,12 +131,42 @@ namespace Chess.Brain
                 enemyPieces = Board.whitePieces;
             }
             transpositionTable = new Dictionary<ulong, (int score, int depth)>();
+            book = new OpeningBook(@"C:\Users\jedyn\source\repos\Chess\Resources\book.txt");
         }
 
         public override Move ChooseMove()
         {
             List<Move> moves = MoveGenerator.GenerateMoves();
             Move chosenMove = null;
+            if (inOpening)
+            {
+                if (Board.moveHistory.Count != 0)
+                {
+                    book.MakeMove(Board.moveHistory.Peek());
+                    string moveString = book.GetNextMove();
+
+                    if (moveString == null)
+                    {
+                        inOpening = false;
+                    }
+                    else
+                    {
+                        foreach (Move move in moves)
+                        {
+                            if (move.ToString() == moveString)
+                            {
+                                book.MakeMove(move);
+                                Console.WriteLine("book move");
+                                return move;
+                            }
+                        }
+                        inOpening = false;
+                    }
+                }
+            }
+
+            
+            
 
             nodesVisited = 0;
             transpositions = 0;

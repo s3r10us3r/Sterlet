@@ -343,7 +343,6 @@ namespace Chess.gui
 
         public async void GetMoveFromPlayer(Player player)
         {
-            Console.WriteLine("This was called");
             Move move = null;
             await Task.Run(() =>
             {
