@@ -35,5 +35,7 @@
         <TextBlock x:Name="whoWonText" Grid.Row="1" Grid.Column="1" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="50"/>
         <TextBlock x:Name="reasonText" Grid.Row="2" Grid.Column="1" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
 
+        <TextBlock x:Name="enigneAnalysis" Grid.Row="1" Grid.Column="0" Foreground="Yellow" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" Text="Depth = book  Eval = book  NaiveEval = book"/>
+
     </Grid>
 </Page>

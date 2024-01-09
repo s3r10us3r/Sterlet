@@ -60,17 +60,26 @@ namespace Chess.Brain
 
         public string GetNextMove()
         {
-            if(possibleMoves == null || possibleMoves.Count == 0)
+            if (possibleMoves == null || possibleMoves.Count == 0)
             {
                 return null;
             }
-            int randomIndex = rand.Next(possibleMoves.Count);
-            return possibleMoves[randomIndex].moveString;
+            List<MoveNode> movesWeighted = new List<MoveNode>();
+            foreach (MoveNode move in possibleMoves)
+            {
+                for(int i = 0; i < move.weight; i++)
+                {
+                    movesWeighted.Add(move);
+                }
+            }
+            int randomIndex = rand.Next(movesWeighted.Count);
+            return movesWeighted[randomIndex].moveString;
         }
     }
 
     class MoveNode
     {
+        public readonly int weight;
         public readonly string moveString;
         public List<MoveNode> Offspring { get; }
 
@@ -79,6 +88,7 @@ namespace Chess.Brain
             moveString = move;
             if(depth == games[0].Length - 1)
             {
+                weight = 1;
                 Offspring = null;
             }
             else
@@ -93,13 +103,15 @@ namespace Chess.Brain
                         lines.Add(game[depth + 1]);
                     }
                 }
-                //Console.WriteLine(lines.Count);
+
                 Offspring = new List<MoveNode>();
 
-                foreach(string line in lines)
+                foreach (string line in lines)
                 {
                     Offspring.Add(new MoveNode(gamesWithMe, depth + 1, line));
                 }
+
+                weight = 1 + Offspring.Count;
             }
         }
     }

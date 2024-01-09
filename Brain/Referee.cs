@@ -11,7 +11,10 @@ namespace Chess.Brain
             PieceList toMove;
             PieceList toStay;
 
-            
+            if (Board.repetitionTable[Board.hash] >= 3)
+            {
+                return GameState.DRAW_BY_REPETITION;
+            }
 
             if(Board.toMove == Piece.WHITE)
             {
@@ -50,12 +53,18 @@ namespace Chess.Brain
 
             }
 
+            uint halfMoves = Board.currentGameState >> 14;
+            if (halfMoves >= 50)
+            {
+                return GameState.DRAW_BY_HALFMOVES;
+            }
+
             return GameState.ONGOING;
         }
     }
 
     public enum GameState
     {
-        ONGOING, WIN, DRAW_BY_MATERIAL, DRAW_BY_STALEMATE
+        ONGOING, WIN, DRAW_BY_MATERIAL, DRAW_BY_STALEMATE, DRAW_BY_REPETITION, DRAW_BY_HALFMOVES
     }
 }

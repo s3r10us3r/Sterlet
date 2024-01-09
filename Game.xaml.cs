@@ -13,6 +13,8 @@ namespace Chess
     public partial class Game : Page
     {
         private readonly ChessBoard chessBoard;
+        private bool engineDebuggin = true;
+        public static Game game;
 
         public Game(string FEN, PlayerType whitePlayerType, PlayerType blackPlayerType, TimerOptions timerOptions)
         {
@@ -28,7 +30,7 @@ namespace Chess
             }
 
             Board.ReadFEN(FEN);
-            Player whitePlayer;
+            IPlayer whitePlayer;
             if (whitePlayerType == PlayerType.HUMAN_PLAYER)
             {
                 whitePlayer = new HumanPlayer();
@@ -38,7 +40,7 @@ namespace Chess
                 whitePlayer = new Sterlet(5, Piece.WHITE);
             }
 
-            Player blackPlayer;
+            IPlayer blackPlayer;
             if (blackPlayerType == PlayerType.HUMAN_PLAYER)
             {
                 blackPlayer = new HumanPlayer();
@@ -52,11 +54,19 @@ namespace Chess
             chessBoardBorder.Child = chessBoard;
             timerWhite.ChessBoard = chessBoard;
             timerBlack.ChessBoard = chessBoard;
+
+            game = this;
         }
 
         private void RotateClick(object sender, RoutedEventArgs e)
         {
             chessBoard.Invert();
+        }
+
+        public void UpdateDiagnostics(SearchResults searchResults)
+        {
+            if (searchResults != null)
+                enigneAnalysis.Text = $"Depth = {searchResults.depthSearched} Eval = {searchResults.eval}  NaiveEval = {searchResults.naiveEval}";
         }
     }
 }

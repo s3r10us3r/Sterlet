@@ -60,6 +60,7 @@ namespace Chess.Logic
 
         public static Stack<Move> moveHistory = new Stack<Move>();
 
+        public static Dictionary<ulong, int> repetitionTable = new Dictionary<ulong, int>();
         public static void ReadFEN(string fenString)
         {
 
@@ -95,6 +96,7 @@ namespace Chess.Logic
             blackPieces = new PieceList(board, Piece.BLACK);
 
             hash = Zobrist.HashCurrentPosition();
+            repetitionTable[hash] = 1;
         }
 
         public static void MakeMove(Move move)
@@ -109,6 +111,7 @@ namespace Chess.Logic
 
             uint newGameState = 0;
             newGameState |= currentGameState & (whiteKingsideCastleMask | whiteQueensideCastleMask | blackKingsideCastleMask | blackQueensideCastleMask);
+
             uint color = toMove;
             PieceList pieceList;
             PieceList enemyPieceList;
@@ -328,11 +331,21 @@ namespace Chess.Logic
             gameStateHistory.Push(currentGameState);
             moveHistory.Push(move);
             currentGameState = newGameState;
+            if (!repetitionTable.ContainsKey(hash))
+            {
+                repetitionTable[hash] = 1;
+            }
+            else
+            {
+                repetitionTable[hash] += 1;
+            }
             ChangeSides();
         }
 
         public static void UnMakeMove()
         {
+            repetitionTable[hash] -= 1;
+
             Move move = moveHistory.Pop();
             uint color = toStay;
             int target = move.TargetSquare;
@@ -495,8 +508,8 @@ namespace Chess.Logic
             if (enPassantString != "-")
             {
                 uint enPassantField = FieldStringToNumber(enPassantString);
-                uint enPassantFile = enPassantField % 8 + 1;
-                currentGameState |= (enPassantFile << 4);
+                uint enPassantFile = (enPassantField % 8) + 1;
+                currentGameState |= enPassantFile << 4;
             }
         }
 

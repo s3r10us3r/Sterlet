@@ -5,116 +5,51 @@ using Chess.Logic;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace Chess.Brain
 {
-    public partial class Sterlet : Player
+    public partial class Sterlet : IPlayer
     {
+        private int timeInMillis = 2000;
         private int initialDepth;
         private OpeningBook book;
         //private readonly string bookPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "book.txt");
-
-        private const int PAWN = 100, ROOK = 500, QUEEN = 900, BISHOP = 330, KNIGHT = 320;
-        private const int weightOfAllPieces = ROOK * 4 + QUEEN * 2 + BISHOP * 4 + KNIGHT * 4;
-
-        //the evaluation boards are set for black (they have to be inverted for white pieces)
-        private readonly int[] pawnPositions =
-        {
-            0,  0,  0,  0,  0,  0,  0,  0,
-            50, 50, 50, 50, 50, 50, 50, 50,
-            10, 10, 20, 30, 30, 20, 10, 10,
-            5,  5, 10, 25, 25, 10,  5,  5,
-            0,  0,  0, 20, 20,  0,  0,  0,
-            5, -5,-10,  0,  0,-10, -5,  5,
-            5, 10, 10,-20,-20, 10, 10,  5,
-            0,  0,  0,  0,  0,  0,  0,  0
-        };
-
-        private readonly int[] queenPositions =
-        {
-            -20,-10,-10, -5, -5,-10,-10,-20,
-            -10,  0,  0,  0,  0,  0,  0,-10,
-            -10,  0,  5,  5,  5,  5,  0,-10,
-             -5,  0,  5,  5,  5,  5,  0, -5,
-              0,  0,  5,  5,  5,  5,  0, -5,
-            -10,  5,  5,  5,  5,  5,  0,-10,
-            -10,  0,  5,  0,  0,  0,  0,-10,
-            -20,-10,-10, -5, -5,-10,-10,-20
-        };
-
-        private readonly int[] knightPositions =
-        {
-            -50,-40,-30,-30,-30,-30,-40,-50,
-            -40,-20,  0,  0,  0,  0,-20,-40,
-            -30,  0, 10, 15, 15, 10,  0,-30,
-            -30,  5, 15, 20, 20, 15,  5,-30,
-            -30,  0, 15, 20, 20, 15,  0,-30,
-            -30,  5, 10, 15, 15, 10,  5,-30,
-            -40,-20,  0,  5,  5,  0,-20,-40,
-            -50,-40,-30,-30,-30,-30,-40,-50,
-        };
-
-        private readonly int[] bishopPositions =
-        {
-            -20,-10,-10,-10,-10,-10,-10,-20,
-            -10,  0,  0,  0,  0,  0,  0,-10,
-            -10,  0,  5, 10, 10,  5,  0,-10,
-            -10,  5,  5, 10, 10,  5,  5,-10,
-            -10,  0, 10, 10, 10, 10,  0,-10,
-            -10, 10, 10, 10, 10, 10, 10,-10,
-            -10,  5,  0,  0,  0,  0,  5,-10,
-            -20,-10,-10,-10,-10,-10,-10,-20
-        };
-
-        private readonly int[] rookPositions =
-        {
-              0,  0,  0,  0,  0,  0,  0,  0,
-              5, 10, 10, 10, 10, 10, 10,  5,
-             -5,  0,  0,  0,  0,  0,  0, -5,
-             -5,  0,  0,  0,  0,  0,  0, -5,
-             -5,  0,  0,  0,  0,  0,  0, -5,
-             -5,  0,  0,  0,  0,  0,  0, -5,
-             -5,  0,  0,  0,  0,  0,  0, -5,
-              0,  0,  0,  5,  5,  0,  0,  0
-        };
-
-        private readonly int[] middleGameKingPositions =
-        {
-            -30,-40,-40,-50,-50,-40,-40,-30,
-            -30,-40,-40,-50,-50,-40,-40,-30,
-            -30,-40,-40,-50,-50,-40,-40,-30,
-            -30,-40,-40,-50,-50,-40,-40,-30,
-            -20,-30,-30,-40,-40,-30,-30,-20,
-            -10,-20,-20,-20,-20,-20,-20,-10,
-             20, 20,  0,  0,  0,  0, 20, 20,
-             20, 30, 10,  0,  0, 10, 30, 20
-        };
-
-        private readonly int[] endGameKingPositions =
-        {
-            -50,-40,-30,-20,-20,-30,-40,-50,
-            -30,-20,-10,  0,  0,-10,-20,-30,
-            -30,-10, 20, 30, 30, 20,-10,-30,
-            -30,-10, 30, 40, 40, 30,-10,-30,
-            -30,-10, 30, 40, 40, 30,-10,-30,
-            -30,-10, 20, 30, 30, 20,-10,-30,
-            -30,-30,  0,  0,  0,  0,-30,-30,
-            -50,-30,-30,-30,-30,-30,-30,-50
-        };
 
         private PieceList allyPieces;
         private PieceList enemyPieces;
         private readonly uint allyColor;
         private readonly uint enemyColor;
+
+        //table for storing positions that have been evaluated
+        //this table IS cleared between search iterations
         private Dictionary<ulong, (int score, int depth)> transpositionTable;
+
+        //this dictionary stores a so called history heuristic, if a move has been cut off we give it a score 2^depth
+        //we use this in move ordering
+        //key is simply a move value
+        //this is not cleared between search iterations
+        private int[] historyHeuristic;
+
+        //these are thread fields for iterative deepening
+        //when iterative deepening completes a search to a given depth, it sets the chosenMove
+        private Move chosenMove = null;
+        //when hasFinished is set to true iterative deepening will stop after it completes the search, this is here in case the depth 1 search exceeds given time
+        private bool hasFinished = false;
+        //this is for debugging purposes
+        private int depthReached = 0;
 
         private readonly Predicate<Move> isCapture = move => MoveClassifier.IsCapture(move);
 
         private static int nodesVisited = 0;
         private static int transpositions = 0;
+
+        public SearchResults SearchResults { get; private set; }
+
         bool inOpening = true;
         public Sterlet(int depth, uint color)
         {
+            SearchResults = null;
             this.initialDepth = depth;
             if (color == Piece.WHITE)
             {
@@ -134,7 +69,7 @@ namespace Chess.Brain
             book = new OpeningBook(@"C:\Users\jedyn\source\repos\Chess\Resources\book.txt");
         }
 
-        public override Move ChooseMove()
+        public Move ChooseMove()
         {
             List<Move> moves = MoveGenerator.GenerateMoves();
             if (inOpening)
@@ -147,7 +82,9 @@ namespace Chess.Brain
                 inOpening = false;
             }
 
-            return Search(moves, initialDepth);
+            Move moveChosen = MakeSearchForMillis(timeInMillis);
+            return moveChosen;
+            //return Search(moves, initialDepth);
         }
 
         
@@ -180,9 +117,54 @@ namespace Chess.Brain
             return null;
         }
 
+        private Move MakeSearchForMillis(int millis)
+        {
+            chosenMove = null;
+            hasFinished = false;
+            depthReached = 0;
+            Thread searchThread = new Thread(
+                new ThreadStart(IterativeDeepeningSearch)
+            );
+            searchThread.Start();
+            Thread.Sleep(millis);
+            hasFinished = true;
+
+            searchThread.Join();
+
+            if (chosenMove != null)
+            {
+                return chosenMove;
+            }
+            //if a search has not been completed(even depth 1 search) return any move
+            else //this is very unlikely and probably won't happen a single time
+            {
+                List<Move> moves = MoveGenerator.GenerateMoves();
+                return moves[0];
+            }
+        }
+
+        private void IterativeDeepeningSearch()
+        {
+            historyHeuristic = new int[ushort.MaxValue];
+            List<Move> depth1Moves = MoveGenerator.GenerateMoves();
+            int currentDepth = 1;
+            while (!hasFinished)
+            {
+                Move thisIteration = Search(depth1Moves, currentDepth);
+                if(hasFinished)
+                {
+                    break;
+                }
+                chosenMove = thisIteration;
+                depthReached = currentDepth;
+                currentDepth++;
+            }
+        }
 
         private Move Search(List<Move> moves, int depth)
         {
+            transpositionTable.Clear();
+            
             Move chosenMove = null;
             nodesVisited = 0;
             transpositions = 0;
@@ -198,6 +180,7 @@ namespace Chess.Brain
                     Board.UnMakeMove();
                     break;
                 }
+                historyHeuristic[move.value] += depth * depth;
                 if (score > alpha)
                 {
                     alpha = score;
@@ -206,19 +189,26 @@ namespace Chess.Brain
                 Board.UnMakeMove();
             }
 
+            if (!hasFinished)
+            {
+                SearchResults = new SearchResults(depth, alpha, Evaluate());
+            }
 
-            Console.WriteLine($"VISITED NODES {nodesVisited} MOVE {chosenMove} EVALUATED AT {alpha} TRANSPOSITIONS {transpositions}");
-            int capturesNaive = 0;
-
-            Console.WriteLine($"0-depth EVAL {Evaluate()} NUMBER OF CAPTURES {capturesNaive}");
             return chosenMove;
         }
 
         //evaluation values are heavily based on https://www.chessprogramming.org/Simplified_Evaluation_Function
         private int Evaluate()
         {
+            //checks repetitions and half move clock
+            //might be inaccurate since repetition table uses zobrist hashing but it should not affect search
+            if (DrawByRules())
+            {
+                return 0;
+            }
+
             nodesVisited++;
-            double endGameWeight = (MaterialWeight(allyPieces) + MaterialWeight(enemyPieces) - 1600) / weightOfAllPieces;
+            double endGameWeight = (MaterialWeight(allyPieces) + MaterialWeight(enemyPieces) - 1600) / PieceEvaluation.weightOfAllPieces;
 
             int evaluation = MaterialWeight(allyPieces) - MaterialWeight(enemyPieces);
 
@@ -230,7 +220,7 @@ namespace Chess.Brain
                     continue;
                 }
                 int index = i;
-                //we use this despite the board not being symmetrical along y axis, because the evaluation boards are symmetrical along y axis
+                //we use this despite the board not being symmetrical along y axis, because the evaluation boards are
                 if (Piece.GetColor(piece) == Piece.WHITE)
                 {
                     index = 63 - i;
@@ -241,22 +231,22 @@ namespace Chess.Brain
                 switch (pieceType)
                 {
                     case Piece.PAWN:
-                        score = pawnPositions[index];
+                        score = PieceEvaluation.pawnPositions[index];
                         break;
                     case Piece.KNIGHT:
-                        score = knightPositions[index];
+                        score = PieceEvaluation.knightPositions[index];
                         break;
                     case Piece.BISHOP:
-                        score = bishopPositions[index];
+                        score = PieceEvaluation.bishopPositions[index];
                         break;
                     case Piece.QUEEN:
-                        score = queenPositions[index];
+                        score = PieceEvaluation.queenPositions[index];
                         break;
                     case Piece.ROOK:
-                        score = rookPositions[index];
+                        score = PieceEvaluation.rookPositions[index];
                         break;
                     case Piece.KING:
-                        score = (int)(middleGameKingPositions[index] * (1-endGameWeight) + endGameKingPositions[index] * endGameWeight);
+                        score = (int)(PieceEvaluation.middleGameKingPositions[index] * (1-endGameWeight) + PieceEvaluation.endGameKingPositions[index] * endGameWeight);
                         break;
                 }
 
@@ -275,6 +265,11 @@ namespace Chess.Brain
 
         private int AlphaBetaMin(int alpha, int beta, int depth)
         {
+            if (hasFinished)
+            {
+                return 0;
+            }
+
             if (depth == 0)
             {
                 return AlphaBetaMinQuiscence(alpha, beta);
@@ -285,6 +280,7 @@ namespace Chess.Brain
                 return -EvaluateGameState() * depth;
             }
             OrderMoves(moves);
+
             foreach(Move move in moves)
             {
                 Board.MakeMove(move);
@@ -305,17 +301,25 @@ namespace Chess.Brain
                     Board.UnMakeMove();
                     return alpha;
                 }
+                historyHeuristic[move.value] += depth*depth;
                 if (score < beta)
                 {
                     beta = score;
                 }
                 Board.UnMakeMove();
             }
+            
+
             return beta;
         }
 
         private int AlphaBetaMax(int alpha, int beta, int depth)
         {
+            if(hasFinished)
+            {
+                return 0;
+            }
+
             if (depth == 0)
             {
                 return AlphaBetaMaxQuiscence(alpha, beta);
@@ -326,6 +330,9 @@ namespace Chess.Brain
                 return EvaluateGameState() * depth;
             }
             OrderMoves(moves);
+
+            Move currentCutoff = null;
+
             foreach (Move move in moves)
             {
                 Board.MakeMove(move);
@@ -346,9 +353,11 @@ namespace Chess.Brain
                     Board.UnMakeMove();
                     return beta;
                 }
+                historyHeuristic[move.value] += depth * depth;
                 if (score > alpha)
                 {
                     alpha = score;
+                    currentCutoff = move;
                 }
                 Board.UnMakeMove();
             }
@@ -357,6 +366,8 @@ namespace Chess.Brain
 
         private int AlphaBetaMinQuiscence(int alpha, int beta)
         {
+            if (hasFinished)
+                return 0;
             int eval = Evaluate();
             if (eval <= alpha)
             {
@@ -393,6 +404,8 @@ namespace Chess.Brain
 
         private int AlphaBetaMaxQuiscence(int alpha, int beta)
         {
+            if (hasFinished)
+                return 0;
             int eval = Evaluate();
             if (eval >= beta)
             {
@@ -431,6 +444,20 @@ namespace Chess.Brain
         {
             List<double> scores = new List<double>();
             ulong enemyPawnsAttacks = AttackMapper.getPawnAttacks(enemyPieces.pawns, enemyColor);
+
+            for (int i = 0; i < moves.Count; i++)
+            {
+                int maxIndex = i;
+                for (int j = i + 1; j < moves.Count; j++)
+                {
+                    if (historyHeuristic[j] > historyHeuristic[maxIndex])
+                    {
+                        maxIndex = j;
+                    }
+                }
+                (moves[i], moves[maxIndex]) = (moves[maxIndex], moves[i]);
+            }
+
             foreach (Move move in moves)
             {
                 double score = 0;
@@ -440,19 +467,19 @@ namespace Chess.Brain
                 //here we want captures to ALWAYS go first even tough it might seem that higher piece capturing lower piece is usually a bad move, bad captures will be cut quickly and the approach where we place nonCaptures last leads to best move being searched last quite often
                 if (capturedPiece != Piece.NONE)
                 {
-                    score = 10 * GetPieceValue(capturedPiece) - GetPieceValue(movingPiece);
+                    score = 10 * PieceEvaluation.GetPieceValue(capturedPiece) - PieceEvaluation.GetPieceValue(movingPiece);
                 }
 
                 //this is because flags with higher value than PawnTwoForward are promotions 
                 if (move.MoveFlag > Move.Flag.PawnTwoForward)
                 {
-                    score += 10 * QUEEN;
+                    score += 10 * PieceEvaluation.QUEEN;
                 }
 
                 ulong targetBitboard = 1UL << move.TargetSquare;
                 if ((targetBitboard & enemyPawnsAttacks) != 0)
                 {
-                    score -= GetPieceValue(movingPiece);
+                    score -= PieceEvaluation.GetPieceValue(movingPiece);
                 }
                 scores.Add(score);
             }
@@ -493,35 +520,23 @@ namespace Chess.Brain
             int pawns = BitMagician.CountBits(pieces.pawns);
             int queens = BitMagician.CountBits(pieces.orthogonalSliders & pieces.diagonalSliders);
             int knights = BitMagician.CountBits(pieces.knights);
-            return pawns * PAWN + bishops * BISHOP + rooks * ROOK + queens * QUEEN + knights * KNIGHT;
+            return pawns * PieceEvaluation.PAWN + bishops * PieceEvaluation.BISHOP + rooks * PieceEvaluation.ROOK + queens * PieceEvaluation.QUEEN + knights * PieceEvaluation.KNIGHT;
         }
 
-        private double GetPieceValue(uint piece)
-        {
-            uint pieceType = Piece.GetPiece(piece);
-            switch(pieceType)
-            {
-                case Piece.PAWN:
-                    return PAWN;
-                case Piece.KNIGHT:
-                    return KNIGHT;
-                case Piece.ROOK:
-                    return ROOK;
-                case Piece.QUEEN:
-                    return QUEEN;
-                case Piece.BISHOP:
-                    return BISHOP;
-            }
-            return 0;
-        }
-
-        public override PieceImage GetPiece(uint piece, int field)
+        public PieceImage GetPiece(uint piece, int field)
         {
             return new PieceImage(piece, field);
         }
 
-        public override void RemovePiece(PieceImage piece)
+        public void RemovePiece(PieceImage piece)
         {
+        }
+
+        //checks for repetitions or half moves
+        private bool DrawByRules()
+        {
+            uint halfMoves = Board.currentGameState >> 14;
+            return Board.repetitionTable[Board.hash] >= 3 || halfMoves >= 50;
         }
     }
 }

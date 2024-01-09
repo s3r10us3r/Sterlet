@@ -1,7 +1,6 @@
 ﻿using Chess.Abstracts;
 using Chess.Brain;
 using Chess.Logic;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +12,6 @@ namespace Chess.gui
 {
     public class ChessBoard : Grid
     {
-
         public const int FIELDSIZE = 75;
 
         private static bool isInverted = false;
@@ -23,11 +21,11 @@ namespace Chess.gui
         private readonly SolidColorBrush BLACK_HIGHLITED_COLOR = new SolidColorBrush(Color.FromRgb(100, 100, 0));
         private readonly SolidColorBrush WHITE_LAST_MOVE_COLOR = new SolidColorBrush(Color.FromRgb(112, 112, 10));
         private readonly SolidColorBrush BLACK_LAST_MOVE_COLOR = new SolidColorBrush(Color.FromRgb(102, 102, 0));
-        
+
         private PieceImage[] boardArray = new PieceImage[64];
         private Border[,] fieldArray = new Border[8, 8];
-        private Player whitePlayer;
-        private Player blackPlayer;
+        private IPlayer whitePlayer;
+        private IPlayer blackPlayer;
 
         private Timer whiteTimer;
         private Timer blackTimer;
@@ -40,8 +38,7 @@ namespace Chess.gui
         private (int start, int end) lastMoveFields;
 
         private bool blocked = false;
-
-        public ChessBoard(Player whitePlayer, Player blackPlayer, Timer whiteTimer, Timer blackTimer, TextBlock whoWonText, TextBlock reasonText) : base()
+        public ChessBoard(IPlayer whitePlayer, IPlayer blackPlayer, Timer whiteTimer, Timer blackTimer, TextBlock whoWonText, TextBlock reasonText) : base()
         {
             this.whoWonText = whoWonText;
             this.reasonText = reasonText;
@@ -319,29 +316,40 @@ namespace Chess.gui
 
             List<Move> moves = MoveGenerator.GenerateMoves();
             GameState gameState = Referee.DetermineGameState(moves);
-            if(gameState != GameState.ONGOING)
+            if (gameState != GameState.ONGOING)
             {
-                if (gameState == GameState.WIN)
-                {
-                    string whoWon = Board.toMove == Piece.WHITE ? "Black wins!" : "White wins!";
-                    string reason = "Checkmate!";
-                    Finish(whoWon, reason);
-                }
-                else if(gameState == GameState.DRAW_BY_MATERIAL)
-                {
-                    Finish("Draw", "Insufficient material");
-                }
-                else if(gameState == GameState.DRAW_BY_STALEMATE)
-                {
-                    Finish("Draw", "By stalemate");
-                }
-                return;
-            }
+                string whoWon = "";
+                string reason = "";
 
+                switch (gameState)
+                {
+                    case GameState.WIN:
+                        whoWon = Board.toMove == Piece.WHITE ? "Black wins!" : "White wins!";
+                        reason = "Checkmate!";
+                        break;
+                    case GameState.DRAW_BY_MATERIAL:
+                        whoWon = "Draw";
+                        reason = "Insufficient material";
+                        break;
+                    case GameState.DRAW_BY_REPETITION:
+                        whoWon = "Draw";
+                        reason = "By repetition";
+                        break;
+                    case GameState.DRAW_BY_STALEMATE:
+                        whoWon = "Draw";
+                        reason = "By stalemate";
+                        break;
+                    case GameState.DRAW_BY_HALFMOVES:
+                        whoWon = "Draw";
+                        reason = "By fifty-move rule";
+                        break;
+                }
+                Finish(whoWon, reason);
+            }
             GetMoveFromPlayer(Board.toMove == Piece.WHITE ? whitePlayer : blackPlayer);
         }
 
-        public async void GetMoveFromPlayer(Player player)
+        public async void GetMoveFromPlayer(IPlayer player)
         {
             Move move = null;
             await Task.Run(() =>
@@ -353,6 +361,12 @@ namespace Chess.gui
                 }
             });
             HighlightLastMove(move);
+            if (player is Sterlet)
+            {
+                Sterlet sterlet = (Sterlet) player;
+                Game game = Game.game;
+                game.UpdateDiagnostics(sterlet.SearchResults);
+            }
             UpdateBoard();
         }
 

@@ -65,7 +65,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="Abstracts\Player.cs" />
+    <Compile Include="Abstracts\IPlayer.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -73,7 +73,9 @@
     <Compile Include="BitMagic\BitMagician.cs" />
     <Compile Include="Brain\MoveClass.cs" />
     <Compile Include="Brain\OpeningBook.cs" />
+    <Compile Include="Brain\PieceEvaluation.cs" />
     <Compile Include="Brain\Referee.cs" />
+    <Compile Include="Brain\SearchResults.cs" />
     <Compile Include="Brain\Sterlet.cs" />
     <Compile Include="Exceptions\InvalidMoveException.cs" />
     <Compile Include="Game.xaml.cs">
