@@ -56,7 +56,11 @@ namespace Chess.Logic
         public static ulong blackKingPosition;
 
         public static ulong hash;
+        public static ulong attackMap;
+
         public static Stack<ulong> hashStack = new Stack<ulong>();
+        public static Stack<ulong> attackStack = new Stack<ulong>();
+
 
         public static Stack<Move> moveHistory = new Stack<Move>();
 
@@ -96,12 +100,14 @@ namespace Chess.Logic
             blackPieces = new PieceList(board, Piece.BLACK);
 
             hash = Zobrist.HashCurrentPosition();
+            attackMap = AttackMapper.MapAttacks(toMove, toMove == Piece.WHITE ? whitePieces : blackPieces, toMove == Piece.WHITE ? blackPieces : whitePieces);
             repetitionTable[hash] = 1;
         }
 
         public static void MakeMove(Move move)
         {
             hashStack.Push(hash);
+            attackStack.Push(attackMap);
 
             if ((currentGameState & enPassantMask) != 0)
             {
@@ -339,7 +345,9 @@ namespace Chess.Logic
             {
                 repetitionTable[hash] += 1;
             }
+
             ChangeSides();
+            attackMap = AttackMapper.MapAttacks(toMove, toMove == Piece.WHITE ? whitePieces : blackPieces, toMove == Piece.WHITE ? blackPieces : whitePieces);
         }
 
         public static void UnMakeMove()
@@ -428,6 +436,7 @@ namespace Chess.Logic
 
             currentGameState = gameStateHistory.Pop();
             hash = hashStack.Pop();
+            attackMap = attackStack.Pop();
             ChangeSides();
         }
 

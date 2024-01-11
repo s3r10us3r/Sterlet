@@ -112,5 +112,10 @@ namespace Chess.gui
                 timer.Start();
             }
         }
+
+        public int GetTimeLeft()
+        {
+            return 10 * initialCentiSeconds - (int)stopwatch.ElapsedMilliseconds;
+        }
     }
 }

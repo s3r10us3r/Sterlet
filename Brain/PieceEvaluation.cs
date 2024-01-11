@@ -97,6 +97,18 @@ namespace Chess.Brain
             -50,-30,-30,-30,-30,-30,-30,-50
         };
 
+
+        public static int[] kingMatePositions =
+        {
+            50, 50, 50, 50, 50, 50, 50, 50,
+            50, 40, 40, 40, 40, 40, 40, 50,
+            50, 40, 30, 30, 30, 30, 40, 50,
+            50, 40, 30, 20, 20, 30, 40, 50,
+            50, 40, 30, 20, 20, 30, 40, 50,
+            50, 40, 30, 30, 30, 30, 40, 50,
+            50, 40, 40, 40, 40, 40, 40, 50,
+            50, 50, 50, 50, 50, 50, 50, 50
+        };
         public static double GetPieceValue(uint piece)
         {
             uint pieceType = Piece.GetPiece(piece);

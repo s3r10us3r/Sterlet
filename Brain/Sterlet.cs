@@ -11,13 +11,15 @@ namespace Chess.Brain
 {
     public partial class Sterlet : IPlayer
     {
+        //TODO: ADD TIME MANAGMENT
+        //time in millis spend on the enxt move
         private int timeInMillis = 2000;
-        private int initialDepth;
         private OpeningBook book;
         //private readonly string bookPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "book.txt");
 
         private PieceList allyPieces;
         private PieceList enemyPieces;
+        
         private readonly uint allyColor;
         private readonly uint enemyColor;
 
@@ -38,19 +40,16 @@ namespace Chess.Brain
         private bool hasFinished = false;
         //this is for debugging purposes
         private int depthReached = 0;
+        private int initiAlDepth = 0;
 
         private readonly Predicate<Move> isCapture = move => MoveClassifier.IsCapture(move);
 
-        private static int nodesVisited = 0;
-        private static int transpositions = 0;
-
         public SearchResults SearchResults { get; private set; }
 
-        bool inOpening = true;
+        bool inOpening = false;
         public Sterlet(int depth, uint color)
         {
             SearchResults = null;
-            this.initialDepth = depth;
             if (color == Piece.WHITE)
             {
                 allyColor = Piece.WHITE;
@@ -67,6 +66,7 @@ namespace Chess.Brain
             }
             transpositionTable = new Dictionary<ulong, (int score, int depth)>();
             book = new OpeningBook(@"C:\Users\jedyn\source\repos\Chess\Resources\book.txt");
+            historyHeuristic = new int[ushort.MaxValue];
         }
 
         public Move ChooseMove()
@@ -145,18 +145,18 @@ namespace Chess.Brain
 
         private void IterativeDeepeningSearch()
         {
-            historyHeuristic = new int[ushort.MaxValue];
             List<Move> depth1Moves = MoveGenerator.GenerateMoves();
             int currentDepth = 1;
             while (!hasFinished)
             {
+                initiAlDepth = currentDepth;
                 Move thisIteration = Search(depth1Moves, currentDepth);
                 if(hasFinished)
                 {
                     break;
                 }
                 chosenMove = thisIteration;
-                depthReached = currentDepth;
+                //depthReached = currentDepth;
                 currentDepth++;
             }
         }
@@ -166,8 +166,6 @@ namespace Chess.Brain
             transpositionTable.Clear();
             
             Move chosenMove = null;
-            nodesVisited = 0;
-            transpositions = 0;
             int alpha = int.MinValue;
             int beta = int.MaxValue;
             OrderMoves(moves);
@@ -207,7 +205,6 @@ namespace Chess.Brain
                 return 0;
             }
 
-            nodesVisited++;
             double endGameWeight = (MaterialWeight(allyPieces) + MaterialWeight(enemyPieces) - 1600) / PieceEvaluation.weightOfAllPieces;
 
             int evaluation = MaterialWeight(allyPieces) - MaterialWeight(enemyPieces);
@@ -258,6 +255,12 @@ namespace Chess.Brain
                 evaluation += score;
             }
 
+            //in case only enemy king's left
+            if (BitMagician.CountBits(enemyPieces.allPieces) == 1)
+            {
+                evaluation += PieceEvaluation.kingMatePositions[BitMagician.GetBitIndex(enemyPieces.kingPosition)];
+            }
+
             return evaluation;
         }
 
@@ -265,11 +268,11 @@ namespace Chess.Brain
 
         private int AlphaBetaMin(int alpha, int beta, int depth)
         {
-            if (hasFinished)
+            if (hasFinished || Board.repetitionTable[Board.hash] >= 3)
             {
                 return 0;
             }
-
+            depthReached = Math.Max(depth, depthReached);
             if (depth == 0)
             {
                 return AlphaBetaMinQuiscence(alpha, beta);
@@ -287,12 +290,16 @@ namespace Chess.Brain
                 int score;
                 if (transpositionTable.ContainsKey(Board.hash) && transpositionTable[Board.hash].depth >= depth)
                 {
-                    transpositions++;
                     ulong hash = Board.hash;
                     score = transpositionTable[hash].score;
                 }
                 else
                 {
+                    int searchDepth = depth;
+                    if ((allyPieces.allPieces & Board.attackMap) != 0)
+                    {
+                        searchDepth++;
+                    }
                     score = AlphaBetaMax(alpha, beta, depth - 1);
                     transpositionTable[Board.hash] = (score, depth);
                 }
@@ -315,7 +322,7 @@ namespace Chess.Brain
 
         private int AlphaBetaMax(int alpha, int beta, int depth)
         {
-            if(hasFinished)
+            if (hasFinished || Board.repetitionTable[Board.hash] >= 3)
             {
                 return 0;
             }
@@ -339,12 +346,16 @@ namespace Chess.Brain
                 int score;
                 if (transpositionTable.ContainsKey(Board.hash) && transpositionTable[Board.hash].depth >= depth)
                 {
-                    transpositions++;
                     ulong hash = Board.hash;
                     score = transpositionTable[hash].score;
                 }
                 else
                 {
+                    int depthOfSearch = depth - 1;
+                    if ((enemyPieces.allPieces & Board.attackMap) != 0)
+                    {
+                        depthOfSearch++;
+                    }
                     score = AlphaBetaMin(alpha, beta, depth - 1);
                     transpositionTable[Board.hash] = (score, depth);
                 }
