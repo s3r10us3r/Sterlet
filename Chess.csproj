@@ -73,7 +73,7 @@
     <Compile Include="BitMagic\BitMagician.cs" />
     <Compile Include="Brain\MoveClass.cs" />
     <Compile Include="Brain\OpeningBook.cs" />
-    <Compile Include="Brain\PieceEvaluation.cs" />
+    <Compile Include="Brain\Evaluator.cs" />
     <Compile Include="Brain\Referee.cs" />
     <Compile Include="Brain\SearchResults.cs" />
     <Compile Include="Brain\Sterlet.cs" />

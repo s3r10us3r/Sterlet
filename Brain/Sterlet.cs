@@ -12,7 +12,8 @@ namespace Chess.Brain
     public partial class Sterlet : IPlayer
     {
         //TODO: ADD TIME MANAGMENT
-        //time in millis spend on the enxt move
+        //time in millis spend on the next move
+        private gui.Timer timer;
         private int timeInMillis = 2000;
         private OpeningBook book;
         //private readonly string bookPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "book.txt");
@@ -38,17 +39,19 @@ namespace Chess.Brain
         private Move chosenMove = null;
         //when hasFinished is set to true iterative deepening will stop after it completes the search, this is here in case the depth 1 search exceeds given time
         private bool hasFinished = false;
+        //when half passed is set to true it means we can't start new deeper search and cut the search short
+        private bool halfPassed = false;
         //this is for debugging purposes
         private int depthReached = 0;
-        private int initiAlDepth = 0;
-
+        
         private readonly Predicate<Move> isCapture = move => MoveClassifier.IsCapture(move);
 
         public SearchResults SearchResults { get; private set; }
 
-        bool inOpening = false;
-        public Sterlet(int depth, uint color)
+        bool inOpening = true;
+        public Sterlet(gui.Timer timer, uint color)
         {
+            this.timer = timer;
             SearchResults = null;
             if (color == Piece.WHITE)
             {
@@ -82,13 +85,11 @@ namespace Chess.Brain
                 inOpening = false;
             }
 
-            Move moveChosen = MakeSearchForMillis(timeInMillis);
+            Move moveChosen = MakeSearchForMillis();
             return moveChosen;
-            //return Search(moves, initialDepth);
         }
 
-        
-
+        //we look for any moves which string's match any available for current move history in  our opening book
         private Move GetMoveFromBook(List<Move> moves)
         {
             if (Board.moveHistory.Count != 0)
@@ -117,19 +118,32 @@ namespace Chess.Brain
             return null;
         }
 
-        private Move MakeSearchForMillis(int millis)
+        
+
+        //TODO REFACTOR THIS SO SEARCH TAKES PLACE IN THE MAIN THREAD AND INSIDE THIS METHOD, THIS WAY IT WILL BE EASIER TO MAKE THE SEARCH CUT IN HALF
+        //WHEN WE HAVE LESS THAN HALF OF THE TIME WE DON'T START ANOTHER SEARCH TO NOT LOOSE TIME
+        //PLAYERS HAVE THEIR SEPARATE THREAD ANYWAY
+        //searches for a maximum of given time
+        private Move MakeSearchForMillis()
         {
             chosenMove = null;
             hasFinished = false;
+            halfPassed = false;
             depthReached = 0;
-            Thread searchThread = new Thread(
-                new ThreadStart(IterativeDeepeningSearch)
-            );
-            searchThread.Start();
-            Thread.Sleep(millis);
-            hasFinished = true;
 
-            searchThread.Join();
+            Thread timeThread = new Thread(
+                new ThreadStart(() =>
+                {
+                    int timeForSearch = EstimateTimeInMillis();
+                    Thread.Sleep(timeForSearch / 2);
+                    halfPassed = true;
+                    Thread.Sleep(timeForSearch / 2);
+                    hasFinished = true;
+                })
+            );
+
+            timeThread.Start();
+            IterativeDeepeningSearch();
 
             if (chosenMove != null)
             {
@@ -147,16 +161,14 @@ namespace Chess.Brain
         {
             List<Move> depth1Moves = MoveGenerator.GenerateMoves();
             int currentDepth = 1;
-            while (!hasFinished)
+            while (!halfPassed)
             {
-                initiAlDepth = currentDepth;
                 Move thisIteration = Search(depth1Moves, currentDepth);
-                if(hasFinished)
+                if (hasFinished)
                 {
                     break;
                 }
                 chosenMove = thisIteration;
-                //depthReached = currentDepth;
                 currentDepth++;
             }
         }
@@ -189,80 +201,13 @@ namespace Chess.Brain
 
             if (!hasFinished)
             {
-                SearchResults = new SearchResults(depth, alpha, Evaluate());
+                SearchResults = new SearchResults(depth, alpha, Evaluator.Evaluate(allyPieces, enemyPieces, allyColor));
             }
 
             return chosenMove;
         }
 
-        //evaluation values are heavily based on https://www.chessprogramming.org/Simplified_Evaluation_Function
-        private int Evaluate()
-        {
-            //checks repetitions and half move clock
-            //might be inaccurate since repetition table uses zobrist hashing but it should not affect search
-            if (DrawByRules())
-            {
-                return 0;
-            }
-
-            double endGameWeight = (MaterialWeight(allyPieces) + MaterialWeight(enemyPieces) - 1600) / PieceEvaluation.weightOfAllPieces;
-
-            int evaluation = MaterialWeight(allyPieces) - MaterialWeight(enemyPieces);
-
-            for (int i = 0; i < 64; i++)
-            {
-                uint piece = Board.board[i];
-                if (piece == Piece.NONE)
-                {
-                    continue;
-                }
-                int index = i;
-                //we use this despite the board not being symmetrical along y axis, because the evaluation boards are
-                if (Piece.GetColor(piece) == Piece.WHITE)
-                {
-                    index = 63 - i;
-                }
-
-                uint pieceType = Piece.GetPiece(piece);
-                int score = 0;
-                switch (pieceType)
-                {
-                    case Piece.PAWN:
-                        score = PieceEvaluation.pawnPositions[index];
-                        break;
-                    case Piece.KNIGHT:
-                        score = PieceEvaluation.knightPositions[index];
-                        break;
-                    case Piece.BISHOP:
-                        score = PieceEvaluation.bishopPositions[index];
-                        break;
-                    case Piece.QUEEN:
-                        score = PieceEvaluation.queenPositions[index];
-                        break;
-                    case Piece.ROOK:
-                        score = PieceEvaluation.rookPositions[index];
-                        break;
-                    case Piece.KING:
-                        score = (int)(PieceEvaluation.middleGameKingPositions[index] * (1-endGameWeight) + PieceEvaluation.endGameKingPositions[index] * endGameWeight);
-                        break;
-                }
-
-                if (Piece.GetColor(piece) != allyColor)
-                {
-                    score = -score;
-                }
-
-                evaluation += score;
-            }
-
-            //in case only enemy king's left
-            if (BitMagician.CountBits(enemyPieces.allPieces) == 1)
-            {
-                evaluation += PieceEvaluation.kingMatePositions[BitMagician.GetBitIndex(enemyPieces.kingPosition)];
-            }
-
-            return evaluation;
-        }
+        
 
 
 
@@ -280,11 +225,11 @@ namespace Chess.Brain
             List<Move> moves = MoveGenerator.GenerateMoves();
             if(moves.Count == 0)
             {
-                return -EvaluateGameState() * depth;
+                return -Evaluator.EvaluateGameState() * depth;
             }
             OrderMoves(moves);
 
-            foreach(Move move in moves)
+            foreach (Move move in moves)
             {
                 Board.MakeMove(move);
                 int score;
@@ -334,7 +279,7 @@ namespace Chess.Brain
             List<Move> moves = MoveGenerator.GenerateMoves();
             if (moves.Count == 0)
             {
-                return EvaluateGameState() * depth;
+                return Evaluator.EvaluateGameState() * depth;
             }
             OrderMoves(moves);
 
@@ -379,7 +324,7 @@ namespace Chess.Brain
         {
             if (hasFinished)
                 return 0;
-            int eval = Evaluate();
+            int eval = Evaluator.Evaluate(allyPieces, enemyPieces, allyColor);
             if (eval <= alpha)
             {
                 return alpha;
@@ -391,7 +336,7 @@ namespace Chess.Brain
             List<Move> moves = MoveGenerator.GenerateMoves();
             if(moves.Count == 0)
             {
-                return EvaluateGameState();
+                return Evaluator.EvaluateGameState();
             }
             moves = moves.FindAll(isCapture);
             OrderMoves(moves);
@@ -417,7 +362,7 @@ namespace Chess.Brain
         {
             if (hasFinished)
                 return 0;
-            int eval = Evaluate();
+            int eval = Evaluator.Evaluate(allyPieces, enemyPieces, allyColor);
             if (eval >= beta)
             {
                 return beta;
@@ -429,7 +374,7 @@ namespace Chess.Brain
             List<Move> moves = MoveGenerator.GenerateMoves();
             if (moves.Count == 0)
             {
-                return -EvaluateGameState();
+                return -Evaluator.EvaluateGameState();
             }
             moves = moves.FindAll(isCapture);
             OrderMoves(moves);
@@ -478,19 +423,19 @@ namespace Chess.Brain
                 //here we want captures to ALWAYS go first even tough it might seem that higher piece capturing lower piece is usually a bad move, bad captures will be cut quickly and the approach where we place nonCaptures last leads to best move being searched last quite often
                 if (capturedPiece != Piece.NONE)
                 {
-                    score = 10 * PieceEvaluation.GetPieceValue(capturedPiece) - PieceEvaluation.GetPieceValue(movingPiece);
+                    score = 10 * Evaluator.GetPieceValue(capturedPiece) - Evaluator.GetPieceValue(movingPiece);
                 }
 
                 //this is because flags with higher value than PawnTwoForward are promotions 
                 if (move.MoveFlag > Move.Flag.PawnTwoForward)
                 {
-                    score += 10 * PieceEvaluation.QUEEN;
+                    score += 10 * Evaluator.QUEEN;
                 }
 
                 ulong targetBitboard = 1UL << move.TargetSquare;
                 if ((targetBitboard & enemyPawnsAttacks) != 0)
                 {
-                    score -= PieceEvaluation.GetPieceValue(movingPiece);
+                    score -= Evaluator.GetPieceValue(movingPiece);
                 }
                 scores.Add(score);
             }
@@ -500,38 +445,13 @@ namespace Chess.Brain
                 int maxIndex = i;
                 for (int j = i + 1; j < moves.Count; j++)
                 {
-                    if(scores[j] > scores[maxIndex])
+                    if (scores[j] > scores[maxIndex])
                     {
                         maxIndex = j;
                     }
                 }
                 (moves[i], scores[i], moves[maxIndex], scores[maxIndex]) = (moves[maxIndex], scores[maxIndex], moves[i], scores[i]);
             }
-        }
-
-        //checks for checkmates and stalemates
-        private int EvaluateGameState()
-        {
-            ulong enemyAttackMap = MoveGenerator.enemyAttackMap;
-            ulong allyKingPosition = Board.toMove == Piece.WHITE ? Board.whitePieces.kingPosition : Board.blackPieces.kingPosition;
-            if ((enemyAttackMap & allyKingPosition) != 0)
-            {
-                return -30000;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-
-        private int MaterialWeight(PieceList pieces)
-        {
-            int bishops = BitMagician.CountBits(pieces.diagonalSliders & ~pieces.orthogonalSliders);
-            int rooks = BitMagician.CountBits(pieces.orthogonalSliders & ~pieces.diagonalSliders);
-            int pawns = BitMagician.CountBits(pieces.pawns);
-            int queens = BitMagician.CountBits(pieces.orthogonalSliders & pieces.diagonalSliders);
-            int knights = BitMagician.CountBits(pieces.knights);
-            return pawns * PieceEvaluation.PAWN + bishops * PieceEvaluation.BISHOP + rooks * PieceEvaluation.ROOK + queens * PieceEvaluation.QUEEN + knights * PieceEvaluation.KNIGHT;
         }
 
         public PieceImage GetPiece(uint piece, int field)
@@ -543,11 +463,10 @@ namespace Chess.Brain
         {
         }
 
-        //checks for repetitions or half moves
-        private bool DrawByRules()
+        //this is very simple estimation we just assume we always have 50 moves till the game is finished (which is a lot :( ) 
+        private int EstimateTimeInMillis()
         {
-            uint halfMoves = Board.currentGameState >> 14;
-            return Board.repetitionTable[Board.hash] >= 3 || halfMoves >= 50;
+            return timer.GetTimeLeft() / 50 + timer.Increment;
         }
     }
 }

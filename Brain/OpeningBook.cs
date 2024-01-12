@@ -7,9 +7,11 @@ namespace Chess.Brain
 {
     public class OpeningBook
     {
+        //stores all moves found in the opening book available in this continuation
         private List<MoveNode> possibleMoves;
-        Random rand;
+        private Random rand;
 
+        //constructs the opening tree
         public OpeningBook(string input)
         {
             possibleMoves = new List<MoveNode>();
@@ -28,36 +30,31 @@ namespace Chess.Brain
                     startingMoves.Add(game[0]);
                 }
             }
-            Console.WriteLine($"first move opening nums {startingMoves.Count}");
             foreach(string startingMove in startingMoves)
             {
                 possibleMoves.Add(new MoveNode(allGames, 0, startingMove));
             }
         }
 
+        //By making a move we narrow down all of the possible moves to possible continuations of the current line
         public void MakeMove(Move move)
         {
-            List<MoveNode> possible = new List<MoveNode>();
             string moveString = move.ToString();
 
             foreach (MoveNode moveNode in possibleMoves)
             {
                 if (moveNode.moveString == moveString)
                 {
-                    possible.Add(moveNode);
+                    possibleMoves = moveNode.Offspring;
+                    return;
                 }
             }
 
-            if(possible.Count == 0)
-            {
-                possibleMoves = null;
-                return;
-            }
+            possibleMoves = null;
 
-            int randomIndex = rand.Next(possible.Count);
-            possibleMoves = possible[randomIndex].Offspring;
         }
 
+        //randomly chooses moves from possible continuations
         public string GetNextMove()
         {
             if (possibleMoves == null || possibleMoves.Count == 0)
@@ -77,16 +74,20 @@ namespace Chess.Brain
         }
     }
 
+    //this class could as well be internal to OpeningBook, it represents a move with its string representation, and possible continuations
+    //there can be many moves with the same string that occur in diffrent possitions and so have diffrent offspring
     class MoveNode
     {
         public readonly int weight;
         public readonly string moveString;
         public List<MoveNode> Offspring { get; }
 
+        //Moves are constructed from all continuations possible from a given position this is recursive and by running it for all possible ply 1 moves we create a tree of all opening lines 
+        //which is later traversed in the opening book class
         public MoveNode(List<string[]> games, int depth, string move)
         {
             moveString = move;
-            if(depth == games[0].Length - 1)
+            if (depth == games[0].Length - 1)
             {
                 weight = 1;
                 Offspring = null;

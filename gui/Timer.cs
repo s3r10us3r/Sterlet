@@ -8,7 +8,7 @@ namespace Chess.gui
     public class Timer
     {
         private int initialCentiSeconds;
-        private readonly int increment;
+        public int Increment { get; private set; }
         private TextBlock timeDisplay;
         private DispatcherTimer timer;
         public ChessBoard ChessBoard { set; get; }
@@ -31,7 +31,7 @@ namespace Chess.gui
             int startInSeconds = timerOption.start;
             int incrementInSeconds = timerOption.increment;
             initialCentiSeconds = startInSeconds * 100;
-            increment = incrementInSeconds * 100;
+            Increment = incrementInSeconds * 100;
             this.timeDisplay = timeDisplay;
 
             timer = new DispatcherTimer();
@@ -97,7 +97,7 @@ namespace Chess.gui
             {
                 return;
             }
-            initialCentiSeconds += increment;
+            initialCentiSeconds += Increment;
             UpdateTimer();
             stopwatch.Stop();
             timer.Stop();

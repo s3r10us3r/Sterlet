@@ -13,12 +13,17 @@ namespace Chess
     public partial class Game : Page
     {
         private readonly ChessBoard chessBoard;
-        private bool engineDebuggin = true;
+        private bool engineDebugging = true;
         public static Game game;
 
         public Game(string FEN, PlayerType whitePlayerType, PlayerType blackPlayerType, TimerOptions timerOptions)
         {
             InitializeComponent();
+
+            if ( !engineDebugging )
+            {
+                enigneAnalysis.Visibility = Visibility.Hidden;
+            }
 
             Timer timerWhite = new Timer(timerOptions, whiteTimer, Piece.WHITE);
             Timer timerBlack = new Timer(timerOptions, blackTimer, Piece.BLACK);
@@ -37,7 +42,7 @@ namespace Chess
             }
             else
             {
-                whitePlayer = new Sterlet(5, Piece.WHITE);
+                whitePlayer = new Sterlet(timerWhite, Piece.WHITE);
             }
 
             IPlayer blackPlayer;
@@ -47,7 +52,7 @@ namespace Chess
             }
             else
             {
-                blackPlayer = new Sterlet(5, Piece.BLACK);
+                blackPlayer = new Sterlet(timerBlack, Piece.BLACK);
             }
 
             chessBoard = new ChessBoard(whitePlayer, blackPlayer, timerWhite, timerBlack, whoWonText, reasonText);
