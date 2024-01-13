@@ -17,16 +17,17 @@ namespace Chess.gui
 
         private uint color;
 
-        private bool isBlocked = false;
+        public bool IsBlocked { get; private set; }
 
         public Timer(TimerOptions timerOption, TextBlock timeDisplay, uint color)
         {
             this.color = color;
             if (timerOption.Option == TimerOptions.Options.NoTime)
             {
-                isBlocked = true;
+                IsBlocked = true;
                 return;
             }
+            IsBlocked = false;
 
             int startInSeconds = timerOption.start;
             int incrementInSeconds = timerOption.increment;
@@ -53,7 +54,7 @@ namespace Chess.gui
             int centiSecondsLeft = initialCentiSeconds - ((int)stopwatch.ElapsedMilliseconds / 10);
             if (centiSecondsLeft <= 0)
             {
-                isBlocked = true;
+                IsBlocked = true;
                 centiSecondsLeft = 0;
             }
             int secondsDisplay = centiSecondsLeft / 100;
@@ -77,7 +78,7 @@ namespace Chess.gui
                 timeDisplay.Text = displayString;
             });
 
-            if (isBlocked)
+            if (IsBlocked)
             {
                 Stop();
                 if (color == Logic.Piece.WHITE)
@@ -93,7 +94,7 @@ namespace Chess.gui
 
         public void Stop()
         {
-            if (isBlocked)
+            if (IsBlocked)
             {
                 return;
             }
@@ -106,7 +107,7 @@ namespace Chess.gui
 
         public void Start()
         {
-            if (!isBlocked)
+            if (!IsBlocked)
             {
                 stopwatch.Start();
                 timer.Start();

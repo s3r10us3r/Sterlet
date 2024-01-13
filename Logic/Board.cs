@@ -50,12 +50,6 @@ namespace Chess.Logic
         public static PieceList whitePieces;
         public static PieceList blackPieces;
 
-
-
-        //this holds a single bit in a 64 bit number indicating king's position
-        public static ulong whiteKingPosition;
-        public static ulong blackKingPosition;
-
         public static ulong hash;
         public static ulong attackMap;
 
@@ -346,14 +340,18 @@ namespace Chess.Logic
             {
                 repetitionTable[hash] += 1;
             }
-
             ChangeSides();
             attackMap = AttackMapper.MapAttacks(toMove, toMove == Piece.WHITE ? whitePieces : blackPieces, toMove == Piece.WHITE ? blackPieces : whitePieces);
+
         }
 
         public static void UnMakeMove()
         {
             repetitionTable[hash] -= 1;
+            if(repetitionTable[hash] == 0)
+            {
+                repetitionTable.Remove(hash);
+            }
 
             Move move = moveHistory.Pop();
             uint color = toStay;

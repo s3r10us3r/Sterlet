@@ -7,7 +7,7 @@ namespace Chess.Brain
     //even tough the this is a standalone class it is closely connected to how the search works
     public static class Evaluator
     {
-        public const int PAWN = 100, ROOK = 500, QUEEN = 900, BISHOP = 330, KNIGHT = 320;
+        public const int PAWN = 100, ROOK = 500, QUEEN = 900, BISHOP = 330, KNIGHT = 320, MATE = 30_000;
         public const int weightOfAllPieces = ROOK * 4 + QUEEN * 2 + BISHOP * 4 + KNIGHT * 4;
 
         //the evaluation boards are set for black (they have to be inverted for white pieces)
@@ -133,7 +133,7 @@ namespace Chess.Brain
             ulong allyKingPosition = Board.toMove == Piece.WHITE ? Board.whitePieces.kingPosition : Board.blackPieces.kingPosition;
             if ((enemyAttackMap & allyKingPosition) != 0)
             {
-                return -30000;
+                return -MATE;
             }
             else
             {

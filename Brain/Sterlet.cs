@@ -14,8 +14,8 @@ namespace Chess.Brain
         //TODO: ADD TIME MANAGMENT
         //time in millis spend on the next move
         private gui.Timer timer;
-        private int timeInMillis = 2000;
         private OpeningBook book;
+        private int extensions = 0;
         //private readonly string bookPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "book.txt");
 
         private PieceList allyPieces;
@@ -28,11 +28,14 @@ namespace Chess.Brain
         //this table IS cleared between search iterations
         private Dictionary<ulong, (int score, int depth)> transpositionTable;
 
-        //this dictionary stores a so called history heuristic, if a move has been cut off we give it a score 2^depth
+        //this tanle stores a so called history heuristic, if a move has been cut off we give add up to its score depth * depth
         //we use this in move ordering
         //key is simply a move value
         //this is not cleared between search iterations
         private int[] historyHeuristic;
+
+        //PV nodes are nodes that were not cut off
+        //as I am preatty dumb i will hash them by just adding move's value to 
 
         //these are thread fields for iterative deepening
         //when iterative deepening completes a search to a given depth, it sets the chosenMove
@@ -119,11 +122,7 @@ namespace Chess.Brain
         }
 
         
-
-        //TODO REFACTOR THIS SO SEARCH TAKES PLACE IN THE MAIN THREAD AND INSIDE THIS METHOD, THIS WAY IT WILL BE EASIER TO MAKE THE SEARCH CUT IN HALF
-        //WHEN WE HAVE LESS THAN HALF OF THE TIME WE DON'T START ANOTHER SEARCH TO NOT LOOSE TIME
-        //PLAYERS HAVE THEIR SEPARATE THREAD ANYWAY
-        //searches for a maximum of given time
+        //searches for a maximum of estimated time
         private Move MakeSearchForMillis()
         {
             chosenMove = null;
@@ -145,6 +144,8 @@ namespace Chess.Brain
             timeThread.Start();
             IterativeDeepeningSearch();
 
+            timeThread.Abort();
+
             if (chosenMove != null)
             {
                 return chosenMove;
@@ -163,20 +164,26 @@ namespace Chess.Brain
             int currentDepth = 1;
             while (!halfPassed)
             {
-                Move thisIteration = Search(depth1Moves, currentDepth);
+                (Move thisIteration, int currentScore) = Search(depth1Moves, currentDepth);
                 if (hasFinished)
                 {
                     break;
                 }
                 chosenMove = thisIteration;
+                if (Math.Abs(currentScore) >= Evaluator.MATE)
+                {
+                    break;
+                }
                 currentDepth++;
             }
         }
 
-        private Move Search(List<Move> moves, int depth)
+        private (Move move, int score) Search(List<Move> moves, int depth)
         {
             transpositionTable.Clear();
-            
+
+            extensions = 0;
+
             Move chosenMove = null;
             int alpha = int.MinValue;
             int beta = int.MaxValue;
@@ -204,7 +211,7 @@ namespace Chess.Brain
                 SearchResults = new SearchResults(depth, alpha, Evaluator.Evaluate(allyPieces, enemyPieces, allyColor));
             }
 
-            return chosenMove;
+            return (chosenMove, alpha);
         }
 
         
@@ -217,13 +224,12 @@ namespace Chess.Brain
             {
                 return 0;
             }
-            depthReached = Math.Max(depth, depthReached);
             if (depth == 0)
             {
-                return AlphaBetaMinQuiscence(alpha, beta);
-            }  
+                return AlphaBetaMinQuiscence(alpha, beta, depth - 1);
+            }
             List<Move> moves = MoveGenerator.GenerateMoves();
-            if(moves.Count == 0)
+            if (moves.Count == 0)
             {
                 return -Evaluator.EvaluateGameState() * depth;
             }
@@ -240,12 +246,8 @@ namespace Chess.Brain
                 }
                 else
                 {
-                    int searchDepth = depth;
-                    if ((allyPieces.allPieces & Board.attackMap) != 0)
-                    {
-                        searchDepth++;
-                    }
-                    score = AlphaBetaMax(alpha, beta, depth - 1);
+                    int nextDepth = depth;
+                    score = AlphaBetaMax(alpha, beta, nextDepth - 1);
                     transpositionTable[Board.hash] = (score, depth);
                 }
                 if (score <= alpha)
@@ -253,7 +255,7 @@ namespace Chess.Brain
                     Board.UnMakeMove();
                     return alpha;
                 }
-                historyHeuristic[move.value] += depth*depth;
+                historyHeuristic[move.value] += depth * depth;
                 if (score < beta)
                 {
                     beta = score;
@@ -274,7 +276,7 @@ namespace Chess.Brain
 
             if (depth == 0)
             {
-                return AlphaBetaMaxQuiscence(alpha, beta);
+                return AlphaBetaMaxQuiscence(alpha, beta, depth - 1);
             }
             List<Move> moves = MoveGenerator.GenerateMoves();
             if (moves.Count == 0)
@@ -282,8 +284,6 @@ namespace Chess.Brain
                 return Evaluator.EvaluateGameState() * depth;
             }
             OrderMoves(moves);
-
-            Move currentCutoff = null;
 
             foreach (Move move in moves)
             {
@@ -296,12 +296,8 @@ namespace Chess.Brain
                 }
                 else
                 {
-                    int depthOfSearch = depth - 1;
-                    if ((enemyPieces.allPieces & Board.attackMap) != 0)
-                    {
-                        depthOfSearch++;
-                    }
-                    score = AlphaBetaMin(alpha, beta, depth - 1);
+                    int nextDepth = depth;
+                    score = AlphaBetaMin(alpha, beta, nextDepth - 1);
                     transpositionTable[Board.hash] = (score, depth);
                 }
                 if (score >= beta)
@@ -313,17 +309,23 @@ namespace Chess.Brain
                 if (score > alpha)
                 {
                     alpha = score;
-                    currentCutoff = move;
                 }
                 Board.UnMakeMove();
             }
             return alpha;
         }
 
-        private int AlphaBetaMinQuiscence(int alpha, int beta)
+        private int AlphaBetaMinQuiscence(int alpha, int beta, int depth)
         {
             if (hasFinished)
                 return 0;
+
+            List<Move> moves = MoveGenerator.GenerateMoves();
+            if (moves.Count == 0)
+            {
+                return Evaluator.EvaluateGameState();
+            }
+
             int eval = Evaluator.Evaluate(allyPieces, enemyPieces, allyColor);
             if (eval <= alpha)
             {
@@ -333,17 +335,14 @@ namespace Chess.Brain
             {
                 beta = eval;
             }
-            List<Move> moves = MoveGenerator.GenerateMoves();
-            if(moves.Count == 0)
-            {
-                return Evaluator.EvaluateGameState();
-            }
+            
             moves = moves.FindAll(isCapture);
             OrderMoves(moves);
             foreach (Move move in moves)
             {
                 Board.MakeMove(move);
-                int score = AlphaBetaMaxQuiscence(alpha, beta);
+                int score;
+                score = AlphaBetaMaxQuiscence(alpha, beta, depth - 1);
                 if (score <= alpha)
                 {
                     Board.UnMakeMove();
@@ -358,7 +357,7 @@ namespace Chess.Brain
             return beta;
         }
 
-        private int AlphaBetaMaxQuiscence(int alpha, int beta)
+        private int AlphaBetaMaxQuiscence(int alpha, int beta, int depth)
         {
             if (hasFinished)
                 return 0;
@@ -381,7 +380,7 @@ namespace Chess.Brain
             foreach (Move move in moves)
             {
                 Board.MakeMove(move);
-                int score = AlphaBetaMinQuiscence(alpha, beta);
+                int score = AlphaBetaMinQuiscence(alpha, beta, depth - 1);
                 if (score >= beta)
                 {
                     Board.UnMakeMove();
@@ -463,10 +462,10 @@ namespace Chess.Brain
         {
         }
 
-        //this is very simple estimation we just assume we always have 50 moves till the game is finished (which is a lot :( ) 
+        //this is very simple estimation we just assume we always have 50 moves till the game is finished or we just return 10 seconds if there are no time constraints  
         private int EstimateTimeInMillis()
         {
-            return timer.GetTimeLeft() / 50 + timer.Increment;
+            return timer.IsBlocked ? 10_000 : timer.GetTimeLeft() / 50 + timer.Increment;
         }
     }
 }
