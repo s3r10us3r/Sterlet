@@ -1,6 +1,7 @@
 ﻿using Chess.Logic;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,7 +17,7 @@ namespace Chess.gui
 
         private static readonly string[] TYPE_STRINGS = { null, "pawn", "bishop", "knight", "rook", "queen", "king" };
 
-        private readonly string CHESS_PIECES_PATH = @"\Resources\chess_pieces\";
+        private readonly string CHESS_PIECES_PATH = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Resources\chess_pieces") + @"\";
 
         public readonly uint piece;
         public int field;
@@ -43,8 +44,9 @@ namespace Chess.gui
             BitmapImage bitmap = new BitmapImage();
             bitmap.BeginInit();
             string image_path = CHESS_PIECES_PATH + colorString + "_" + pieceString + ".png";
+            Console.WriteLine($"IMAGE PATH {image_path}");
 
-            bitmap.UriSource = new Uri(image_path, UriKind.Relative);
+            bitmap.UriSource = new Uri(image_path, UriKind.Absolute);
             bitmap.EndInit();
             Source = bitmap;
         }

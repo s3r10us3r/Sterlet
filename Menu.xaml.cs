@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 
 namespace Chess
 {
@@ -8,6 +9,8 @@ namespace Chess
     /// </summary>
     public partial class Menu : Page
     {
+        private Popup openedPopup = null;
+
         public Menu()
         {
             InitializeComponent();
@@ -15,13 +18,24 @@ namespace Chess
 
         private void PlayerVsPlayer_Click(object sender, RoutedEventArgs e)
         {
+            if (openedPopup != null && !ReferenceEquals(openedPopup, playerVsPlayerPopup))
+            {
+                openedPopup.IsOpen = false;
+            }
+
             playerVsPlayerPopup.IsOpen = true;
+            openedPopup = playerVsPlayerPopup;
         }
 
         private void PlayerVsMachine_Click(object sender, RoutedEventArgs e)
         {
+            if (openedPopup != null && !ReferenceEquals(openedPopup, playerVsMachinePopup))
+            {
+                openedPopup.IsOpen = false;
+            }
+
             playerVsMachinePopup.IsOpen = true;
-            //((MainWindow)Application.Current.MainWindow).ChangePage(new Game(Logic.Board.STARTING_POSITION, PlayerType.COMPUTER_PLAYER, PlayerType.HUMAN_PLAYER, new TimerOptions(TimerOptions.Options.NoTime)));
+            openedPopup = playerVsMachinePopup;
         }
     }
 }

@@ -12,13 +12,10 @@ namespace Chess
         private const int WHITE = 0;
         private const int BLACK = 1;
 
-        private const int EASY = 1, MEDIUM = 2, HARD = 3;
-
         private const string whitePawnSource = "Resources/chess_pieces/white_pawn.png";
         private const string blackPawnSource = "Resources/chess_pieces/black_pawn.png";
 
         private int chosenColor = WHITE;
-        private int chosenDifficulty = EASY;
 
         private readonly List<TimerOptions> optionsList = new List<TimerOptions>
         {
@@ -44,40 +41,6 @@ namespace Chess
             {
                 timeIndex--;
                 timeTextBlock.Text = optionsList[timeIndex].GetOptionString();
-            }
-        }
-
-        private void UpdateDifficulty()
-        {
-            if (chosenDifficulty == EASY)
-            {
-                difficultyTextBox.Text = "EASY";
-            }
-            if (chosenDifficulty == MEDIUM)
-            {
-                difficultyTextBox.Text = "MEDIUM";
-            }
-            if (chosenDifficulty == HARD)
-            {
-                difficultyTextBox.Text = "HARD";
-            }
-        }
-
-        private void DiffciultyUpClicked(object sender, RoutedEventArgs e)
-        {
-            if (chosenDifficulty < 3)
-            {
-                chosenDifficulty++;
-                UpdateDifficulty();
-            }
-        }
-
-        private void DifficultyDownClicked(object sender, RoutedEventArgs e)
-        {
-            if (chosenDifficulty > 1)
-            {
-                chosenDifficulty--;
-                UpdateDifficulty();
             }
         }
 

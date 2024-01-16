@@ -3,6 +3,7 @@ using Chess.gui;
 using Chess.Logic;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 
 namespace Chess.Brain
@@ -42,6 +43,8 @@ namespace Chess.Brain
         //when half passed is set to true it means we can't start new deeper search and cut the search short
         private bool halfPassed = false;
 
+        private readonly string bookPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Resources\book.txt");
+
         private readonly Predicate<Move> isCapture = move => MoveClassifier.IsCapture(move);
 
         public SearchResults SearchResults { get; private set; }
@@ -67,7 +70,7 @@ namespace Chess.Brain
                 enemyPieces = Board.whitePieces;
             }
             transpositionTable = new Dictionary<ulong, (int score, int depth)>();
-            book = new OpeningBook(@"C:\Users\jedyn\source\repos\Chess\Resources\book.txt");
+            book = new OpeningBook(bookPath);
             historyHeuristic = new int[ushort.MaxValue];
         }
 

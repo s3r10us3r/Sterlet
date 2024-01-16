@@ -4,10 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="400" d:DesignWidth="300">
+             d:DesignHeight="300" d:DesignWidth="300">
     <Grid Background="#222224">
         <Grid.RowDefinitions>
-            <RowDefinition Height ="100"/>
             <RowDefinition Height ="100"/>
             <RowDefinition Height ="100"/>
             <RowDefinition Height="100"/>
@@ -26,16 +25,6 @@
             <TextBlock Text="&lt;" TextAlignment="Center" VerticalAlignment="Center" Background="#222224" Foreground="White" FontSize="60" FontFamily="Courier New"/>
         </Button>
         <Button BorderThickness ="0" Grid.Row="1" Grid.Column="3" VerticalContentAlignment="Center" Background="#222224" Click="TimeUpClicked">
-            <TextBlock Text=">" TextAlignment="Center" VerticalAlignment="Center" Background="#222224" Foreground="White" FontSize="60" FontFamily="Courier New"/>
-        </Button>
-
-        <Border BorderThickness ="0" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Height="100">
-            <TextBlock x:Name="difficultyTextBox" Text="Easy" FontSize="30" TextAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
-        </Border>
-        <Button BorderThickness ="0" Grid.Row="2" VerticalContentAlignment="Center" Background="#222224" Click="DifficultyDownClicked">
-            <TextBlock Text="&lt;" TextAlignment="Center" VerticalAlignment="Center" Background="#222224" Foreground="White" FontSize="60" FontFamily="Courier New"/>
-        </Button>
-        <Button BorderThickness ="0" Grid.Row="2" Grid.Column="3" VerticalContentAlignment="Center" Background="#222224" Click="DifficultyDownClicked">
             <TextBlock Text=">" TextAlignment="Center" VerticalAlignment="Center" Background="#222224" Foreground="White" FontSize="60" FontFamily="Courier New"/>
         </Button>
 

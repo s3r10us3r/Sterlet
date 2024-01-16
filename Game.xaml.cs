@@ -13,7 +13,7 @@ namespace Chess
     public partial class Game : Page
     {
         private readonly ChessBoard chessBoard;
-        private const bool DEBUGGING_ON = true;
+        private const bool DEBUGGING_ON = false;
         public static Game game;
 
         public Game(string FEN, PlayerType whitePlayerType, PlayerType blackPlayerType, TimerOptions timerOptions)
