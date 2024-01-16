@@ -1,13 +1,13 @@
 ﻿using Chess.BitMagic;
 using Chess.Logic;
-
+using System;
 
 namespace Chess.Brain
 {
     //even tough the this is a standalone class it is closely connected to how the search works
     public static class Evaluator
     {
-        public const int PAWN = 100, ROOK = 500, QUEEN = 900, BISHOP = 330, KNIGHT = 320, MATE = 30_000;
+        public const int PAWN = 100, ROOK = 500, QUEEN = 950, BISHOP = 330, KNIGHT = 320, MATE = 30_000;
         public const int weightOfAllPieces = ROOK * 4 + QUEEN * 2 + BISHOP * 4 + KNIGHT * 4;
 
         //the evaluation boards are set for black (they have to be inverted for white pieces)
@@ -20,6 +20,18 @@ namespace Chess.Brain
             0,  0,  0, 20, 20,  0,  0,  0,
             5, -5,-10,  0,  0,-10, -5,  5,
             5, 10, 10,-20,-20, 10, 10,  5,
+            0,  0,  0,  0,  0,  0,  0,  0
+        };
+
+        public static readonly int[] endGamePawnPositions =
+        {
+            0,  0,  0,  0,  0,  0,  0,  0,
+            50, 50, 50, 50, 50, 50, 50, 50,
+            40, 40, 40, 40, 40, 40, 40, 40,
+            30, 30, 30, 30, 30, 30, 30, 30,
+            20, 20, 20, 20, 20, 20, 20, 20,
+            10, 10, 10, 10, 10, 10, 10, 10,
+            5,  5,  5,  5,  5,  5,  5,  5,
             0,  0,  0,  0,  0,  0,  0,  0
         };
 
@@ -49,7 +61,7 @@ namespace Chess.Brain
 
         public static readonly int[] bishopPositions =
         {
-            -20,-10,-10,-10,-10,-10,-10,-20,
+            -30,-20,-20,-20,-20,-20,-20,-30,
             -10,  0,  0,  0,  0,  0,  0,-10,
             -10,  0,  5, 10, 10,  5,  0,-10,
             -10,  5,  5, 10, 10,  5,  5,-10,
@@ -98,14 +110,14 @@ namespace Chess.Brain
 
         public static int[] kingMatePositions =
         {
-            50, 50, 50, 50, 50, 50, 50, 50,
-            50, 40, 40, 40, 40, 40, 40, 50,
-            50, 40, 30, 30, 30, 30, 40, 50,
-            50, 40, 30, 20, 20, 30, 40, 50,
-            50, 40, 30, 20, 20, 30, 40, 50,
-            50, 40, 30, 30, 30, 30, 40, 50,
-            50, 40, 40, 40, 40, 40, 40, 50,
-            50, 50, 50, 50, 50, 50, 50, 50
+            100, 70, 70, 70, 70, 70, 70, 100,
+            70, 40, 40, 40, 40, 40, 40, 70,
+            70, 40, 30, 30, 30, 30, 40, 70,
+            70, 40, 30, 0, 0, 30, 40, 70,
+            70, 40, 30, 0, 0, 30, 40, 70,
+            70, 40, 30, 30, 30, 30, 40, 70,
+            70, 40, 40, 40, 40, 40, 40, 70,
+            100, 70, 70, 70, 70, 70, 70, 100
         };
         public static double GetPieceValue(uint piece)
         {
@@ -151,10 +163,25 @@ namespace Chess.Brain
                 return 0;
             }
 
-            double endGameWeight = (MaterialWeight(allyPieces) + MaterialWeight(enemyPieces) - 1600) / weightOfAllPieces;
+            //in case only enemy king's left we just want to make sure it is close to the edge of the board so we can find mate
+            if (BitMagician.CountBits(enemyPieces.allPieces) == 1)
+            {
+                return kingMatePositions[BitMagician.GetBitIndex(enemyPieces.kingPosition)];
+            }
+
+
+
+            bool isEndGame = MaterialWeightIgnorePawns(enemyPieces) <= QUEEN;
 
             int evaluation = MaterialWeight(allyPieces) - MaterialWeight(enemyPieces);
-
+            if (!isEndGame)
+            {
+                evaluation += KingTropism(allyPieces.kingPosition, enemyPieces.allPieces) - KingTropism(enemyPieces.kingPosition, allyPieces.allPieces);
+            }
+            else
+            {
+                evaluation += KingDistanceToPawns(allyPieces.kingPosition, allyPieces.pawns | enemyPieces.pawns) - KingDistanceToPawns(enemyPieces.kingPosition, allyPieces.pawns | enemyPieces.pawns);
+            }
             for (int i = 0; i < 64; i++)
             {
                 uint piece = Board.board[i];
@@ -163,11 +190,14 @@ namespace Chess.Brain
                     continue;
                 }
                 int index = i;
+
+
                 //we use this despite the board not being symmetrical along y axis, because the evaluation boards are
                 if (Piece.GetColor(piece) == Piece.WHITE)
                 {
                     index = 63 - i;
                 }
+               
 
                 uint pieceType = Piece.GetPiece(piece);
                 int score = 0;
@@ -177,19 +207,23 @@ namespace Chess.Brain
                         score = pawnPositions[index];
                         break;
                     case Piece.KNIGHT:
-                        score = knightPositions[index];
+                        if (!isEndGame)
+                            score = knightPositions[index];
                         break;
                     case Piece.BISHOP:
-                        score = bishopPositions[index];
+                        if (!isEndGame)
+                            score = bishopPositions[index];
                         break;
                     case Piece.QUEEN:
-                        score = queenPositions[index];
+                        if (!isEndGame)
+                            score = queenPositions[index];
                         break;
                     case Piece.ROOK:
-                        score = rookPositions[index];
+                        if (!isEndGame)
+                            score = rookPositions[index];
                         break;
                     case Piece.KING:
-                        score = (int)(middleGameKingPositions[index] * (1 - endGameWeight) + endGameKingPositions[index] * endGameWeight);
+                        score = isEndGame ? endGameKingPositions[index] : middleGameKingPositions[index];
                         break;
                 }
 
@@ -200,13 +234,6 @@ namespace Chess.Brain
 
                 evaluation += score;
             }
-
-            //in case only enemy king's left
-            if (BitMagician.CountBits(enemyPieces.allPieces) == 1)
-            {
-                evaluation += Evaluator.kingMatePositions[BitMagician.GetBitIndex(enemyPieces.kingPosition)];
-            }
-
             return evaluation;
         }
 
@@ -225,6 +252,68 @@ namespace Chess.Brain
             int queens = BitMagician.CountBits(pieces.orthogonalSliders & pieces.diagonalSliders);
             int knights = BitMagician.CountBits(pieces.knights);
             return pawns * PAWN + bishops * BISHOP + rooks * ROOK + queens * QUEEN + knights * KNIGHT;
+        }
+
+        private static int MaterialWeightIgnorePawns(PieceList pieces)
+        {
+            int bishops = BitMagician.CountBits(pieces.diagonalSliders & ~pieces.orthogonalSliders);
+            int rooks = BitMagician.CountBits(pieces.orthogonalSliders & ~pieces.diagonalSliders);
+            int queens = BitMagician.CountBits(pieces.orthogonalSliders & pieces.diagonalSliders);
+            int knights = BitMagician.CountBits(pieces.knights);
+            return bishops * BISHOP + rooks * ROOK + queens * QUEEN + knights * KNIGHT;
+        }
+
+        //this is a simplified version of kinng safety, we coutn chebyshev distances from our kign and sum them
+        private static int KingTropism(ulong kingPosition, ulong enemyPieces)
+        {
+            int kingField = BitMagician.GetBitIndex(kingPosition);
+            int kingRank = kingField / 8;
+            int kingFile = kingField % 8;
+
+            int result = 0;
+
+            for (int i = 0; i < 64; i++)
+            {
+                if ((enemyPieces & (1UL << i)) != 0)
+                {
+
+                    int pieceRank = i / 8;
+                    int pieceFile = i % 8;
+
+                    int rankDiff = Math.Abs(kingRank - pieceRank);
+                    int fileDiff = Math.Abs(kingFile - pieceFile);
+
+                    result += Math.Max(rankDiff, fileDiff);
+                }
+            }
+
+            return result;
+        }
+
+        private static int KingDistanceToPawns(ulong kingPosition, ulong pawns)
+        {
+            int kingField = BitMagician.GetBitIndex(kingPosition);
+            int kingRank = kingField / 8;
+            int kingFile = kingField % 8;
+
+            int result = 0;
+
+            for (int i = 0; i < 64; i++)
+            {
+                if ((pawns & (1UL << i)) != 0)
+                {
+
+                    int pieceRank = i / 8;
+                    int pieceFile = i % 8;
+
+                    int rankDiff = Math.Abs(kingRank - pieceRank);
+                    int fileDiff = Math.Abs(kingFile - pieceFile);
+
+                    result += Math.Max(rankDiff, fileDiff);
+                }
+            }
+
+            return -result;
         }
     }
 }

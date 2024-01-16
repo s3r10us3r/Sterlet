@@ -2,6 +2,7 @@
 
 namespace Chess.Logic
 {
+    //see https://www.chessprogramming.org/Zobrist_Hashing
     public static class Zobrist
     {
         public static ulong blackToMove;
@@ -16,7 +17,7 @@ namespace Chess.Logic
         public static Keys blackKeys;
         static Zobrist()
         {
-            Random rand = new Random(2137420);
+            Random rand = new Random(3408230);
 
             whiteKeys = new Keys(rand);
             blackKeys = new Keys(rand);
@@ -35,7 +36,7 @@ namespace Chess.Logic
         public static ulong HashCurrentPosition()
         {
             ulong hash = 0;
-            for(int i = 0; i < 64; i++)
+            for (int i = 0; i < 64; i++)
             {
                 uint color = Piece.GetColor(Board.board[i]);
                 hash ^= GetPieceNum(Board.board[i], i, color == Piece.WHITE ? whiteKeys : blackKeys);

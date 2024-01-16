@@ -26,13 +26,24 @@ namespace Chess.Logic
 
             MapKingAttacks(pieces.kingPosition);
             if (pieces.orthogonalSliders != 0)
+            {
                 MapOrthogonalAttacks(pieces.orthogonalSliders);
+            }
+
             if (pieces.diagonalSliders != 0)
+            {
                 MapDiagonallAttacks(pieces.diagonalSliders);
+            }
+
             if (pieces.pawns != 0)
+            {
                 MapPawnAttacks(pieces.pawns, color);
+            }
+
             if (pieces.knights != 0)
+            {
                 MapKnightAttacks(pieces.knights);
+            }
 
             return attackMap;
         }
@@ -45,9 +56,13 @@ namespace Chess.Logic
                 {
                     ulong bit = 1UL << i * 8 + j;
                     if ((bit & bitBoard) != 0)
+                    {
                         Console.Write('1');
+                    }
                     else
+                    {
                         Console.Write('0');
+                    }
                 }
                 Console.Write('\n');
             }
@@ -71,7 +86,7 @@ namespace Chess.Logic
 
         }
 
-        public static ulong getPawnAttacks(ulong pawns, uint color)
+        public static ulong GetPawnAttacks(ulong pawns, uint color)
         {
             ulong attackMap = 0;
             if (color == Piece.WHITE)

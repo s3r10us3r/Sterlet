@@ -1,4 +1,6 @@
-﻿namespace Chess.BitMagic
+﻿using System;
+
+namespace Chess.BitMagic
 {
     public static class BitMagician
     {
@@ -26,6 +28,26 @@
             }
 
             return -1;
+        }
+
+        public static void PrintBitBoard(ulong bitBoard)
+        {
+            for (int i = 7; i >= 0; i--)
+            {
+                for (int j = i * 8; j < (i * 8) + 8; j++)
+                {
+                    if ((bitBoard & (1UL << j)) != 0)
+                    {
+                        Console.Write("1");
+                    }
+                    else
+                    {
+                        Console.Write("0");
+                    }
+                }
+
+                Console.Write("\n");
+            }
         }
     }
 }

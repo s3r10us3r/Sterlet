@@ -31,7 +31,7 @@ namespace Chess.gui
                 stackPanel.Children.Add(pieceButton);
             }
 
-            this.Child = stackPanel;
+            Child = stackPanel;
             IsOpen = true;
         }
 
@@ -77,8 +77,8 @@ namespace Chess.gui
 
                 image.Width = 60;
                 image.Height = 60;
-                this.Width = 70;
-                this.Height = 70;
+                Width = 70;
+                Height = 70;
                 Content = image;
                 Click += Button_Click;
             }

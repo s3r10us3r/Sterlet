@@ -1,6 +1,6 @@
 ﻿namespace Chess.Logic
 {
-    static class Piece
+    public static class Piece
     {
         public const uint WALL = 7;
         public const uint NONE = 0;

@@ -105,7 +105,7 @@ namespace Chess.Logic
                 }
                 else
                 {
-                    return GenerateCheckMoves(pieces.kingPosition, allAttackers);
+                    return GenerateCheckMoves(allAttackers);
                 }
             }
             else
@@ -136,11 +136,17 @@ namespace Chess.Logic
                         GenerateDiagonalSliderMoves(i, moveList);
                     }
                     else if ((squareBitboard & pieces.kingPosition) != 0)
+                    {
                         GenerateKingMoves(i, moveList);
+                    }
                     else if ((squareBitboard & pieces.pawns) != 0)
+                    {
                         GeneratePawnMoves(i, moveList);
+                    }
                     else if ((squareBitboard & pieces.knights) != 0)
+                    {
                         GenerateKnightMoves(i, moveList);
+                    }
                 }
                 squareBitboard <<= 1;
             }
@@ -148,7 +154,7 @@ namespace Chess.Logic
             return moveList;
         }
 
-        private static List<Move> GenerateCheckMoves(ulong kingBit, ulong attacker)
+        private static List<Move> GenerateCheckMoves(ulong attacker)
         {
             if ((attacker & (enemyPieces.pawns | enemyPieces.knights)) != 0)
             {

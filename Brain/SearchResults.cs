@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Chess.Brain
+﻿namespace Chess.Brain
 {
-    //this class serves only for analysis of the engine by me
+    //this class serves only for analysis of the engine
     public class SearchResults
     {
         public readonly int depthSearched;

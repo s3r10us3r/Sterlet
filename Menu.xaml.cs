@@ -1,7 +1,4 @@
-﻿using Chess.Brain;
-using Chess.gui;
-using Chess.Logic;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 
 namespace Chess

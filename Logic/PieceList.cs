@@ -11,6 +11,14 @@ namespace Chess.Logic
         public ulong knights = 0;
         public ulong kingPosition = 0;
 
+        public ulong Queens
+        {
+            get
+            {
+                return orthogonalSliders & diagonalSliders;
+            }
+        }
+
         public PieceList(uint[] board, uint color)
         {
             for (int i = 0; i < 64; i++)
@@ -48,15 +56,15 @@ namespace Chess.Logic
         }
 
 
-        public void printAllBitboards()
+        public void PrintAllBitboards()
         {
             Console.WriteLine("PIECES:");
-            printBitBoard(pawns);
-            printBitBoard(knights);
-            printBitBoard(diagonalSliders);
-            printBitBoard(orthogonalSliders);
-            printBitBoard(kingPosition);
-            printBitBoard(allPieces);
+            PrintBitBoard(pawns);
+            PrintBitBoard(knights);
+            PrintBitBoard(diagonalSliders);
+            PrintBitBoard(orthogonalSliders);
+            PrintBitBoard(kingPosition);
+            PrintBitBoard(allPieces);
         }
 
         public void RemovePieceAtField(int field, uint pieceType)
@@ -157,7 +165,7 @@ namespace Chess.Logic
         }
 
 
-        private void printBitBoard(ulong bitBoard)
+        private void PrintBitBoard(ulong bitBoard)
         {
             for (int i = 7; i >= 0; i--)
             {

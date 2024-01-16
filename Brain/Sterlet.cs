@@ -1,10 +1,8 @@
 ﻿using Chess.Abstracts;
-using Chess.BitMagic;
 using Chess.gui;
 using Chess.Logic;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 
 namespace Chess.Brain
@@ -15,12 +13,11 @@ namespace Chess.Brain
         //time in millis spend on the next move
         private gui.Timer timer;
         private OpeningBook book;
-        private int extensions = 0;
         //private readonly string bookPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "book.txt");
 
         private PieceList allyPieces;
         private PieceList enemyPieces;
-        
+
         private readonly uint allyColor;
         private readonly uint enemyColor;
 
@@ -44,13 +41,12 @@ namespace Chess.Brain
         private bool hasFinished = false;
         //when half passed is set to true it means we can't start new deeper search and cut the search short
         private bool halfPassed = false;
-        //this is for debugging purposes
-        private int depthReached = 0;
-        
+
         private readonly Predicate<Move> isCapture = move => MoveClassifier.IsCapture(move);
 
         public SearchResults SearchResults { get; private set; }
 
+        //this can be set to false in order to stop using the opening book
         bool inOpening = true;
         public Sterlet(gui.Timer timer, uint color)
         {
@@ -77,17 +73,20 @@ namespace Chess.Brain
 
         public Move ChooseMove()
         {
+            Console.WriteLine("CALLED");
             List<Move> moves = MoveGenerator.GenerateMoves();
             if (inOpening)
             {
+                Console.WriteLine($"FROM BOOK {moves.Count}");
                 Move chosenMove = GetMoveFromBook(moves);
+                Console.WriteLine(chosenMove);
                 if (chosenMove != null)
                 {
                     return chosenMove;
                 }
                 inOpening = false;
             }
-
+            Console.WriteLine("NOT FROM BOOK");
             Move moveChosen = MakeSearchForMillis();
             return moveChosen;
         }
@@ -98,42 +97,43 @@ namespace Chess.Brain
             if (Board.moveHistory.Count != 0)
             {
                 book.MakeMove(Board.moveHistory.Peek());
-                string moveString = book.GetNextMove();
+            }
+            string moveString = book.GetNextMove();
 
-                if (moveString == null)
+            if (moveString == null)
+            {
+                return null;
+            }
+            else
+            {
+                foreach (Move move in moves)
                 {
-                    return null;
-                }
-                else
-                {
-                    foreach (Move move in moves)
+                    if (move.ToString() == moveString)
                     {
-                        if (move.ToString() == moveString)
-                        {
-                            book.MakeMove(move);
-                            Console.WriteLine("book move");
-                            return move;
-                        }
+                        book.MakeMove(move);
+                        Console.WriteLine("book move");
+                        return move;
                     }
                 }
             }
 
+
             return null;
         }
 
-        
+
         //searches for a maximum of estimated time
         private Move MakeSearchForMillis()
         {
             chosenMove = null;
             hasFinished = false;
             halfPassed = false;
-            depthReached = 0;
 
             Thread timeThread = new Thread(
                 new ThreadStart(() =>
                 {
                     int timeForSearch = EstimateTimeInMillis();
+                    Console.WriteLine($"Time for search {timeForSearch}");
                     Thread.Sleep(timeForSearch / 2);
                     halfPassed = true;
                     Thread.Sleep(timeForSearch / 2);
@@ -143,6 +143,7 @@ namespace Chess.Brain
 
             timeThread.Start();
             IterativeDeepeningSearch();
+
 
             timeThread.Abort();
 
@@ -170,7 +171,7 @@ namespace Chess.Brain
                     break;
                 }
                 chosenMove = thisIteration;
-                if (Math.Abs(currentScore) >= Evaluator.MATE)
+                if (currentScore != int.MinValue && Math.Abs(currentScore) >= Evaluator.MATE)
                 {
                     break;
                 }
@@ -181,8 +182,6 @@ namespace Chess.Brain
         private (Move move, int score) Search(List<Move> moves, int depth)
         {
             transpositionTable.Clear();
-
-            extensions = 0;
 
             Move chosenMove = null;
             int alpha = int.MinValue;
@@ -213,10 +212,6 @@ namespace Chess.Brain
 
             return (chosenMove, alpha);
         }
-
-        
-
-
 
         private int AlphaBetaMin(int alpha, int beta, int depth)
         {
@@ -262,7 +257,7 @@ namespace Chess.Brain
                 }
                 Board.UnMakeMove();
             }
-            
+
 
             return beta;
         }
@@ -331,11 +326,11 @@ namespace Chess.Brain
             {
                 return alpha;
             }
-            if(eval < beta)
+            if (eval < beta)
             {
                 beta = eval;
             }
-            
+
             moves = moves.FindAll(isCapture);
             OrderMoves(moves);
             foreach (Move move in moves)
@@ -398,7 +393,7 @@ namespace Chess.Brain
         private void OrderMoves(List<Move> moves)
         {
             List<double> scores = new List<double>();
-            ulong enemyPawnsAttacks = AttackMapper.getPawnAttacks(enemyPieces.pawns, enemyColor);
+            ulong enemyPawnsAttacks = AttackMapper.GetPawnAttacks(enemyPieces.pawns, enemyColor);
 
             for (int i = 0; i < moves.Count; i++)
             {
@@ -465,7 +460,7 @@ namespace Chess.Brain
         //this is very simple estimation we just assume we always have 50 moves till the game is finished or we just return 10 seconds if there are no time constraints  
         private int EstimateTimeInMillis()
         {
-            return timer.IsBlocked ? 10_000 : timer.GetTimeLeft() / 50 + timer.Increment;
+            return timer.IsBlocked ? 10_000 : (timer.GetTimeLeft() / 50) + timer.Increment;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace Chess.Brain
 {
+    //this class is used in GUI
     public static class Referee
     {
         public static GameState DetermineGameState(List<Move> moves)
@@ -38,11 +39,11 @@ namespace Chess.Brain
             int whitePieceCount = BitMagician.CountBits(Board.whitePieces.allPieces);
             int blackPieceCount = BitMagician.CountBits(Board.blackPieces.allPieces);
 
-            if(whitePieceCount == 1 && blackPieceCount == 1)
+            if (whitePieceCount == 1 && blackPieceCount == 1)
             {
                 return GameState.DRAW_BY_MATERIAL;
             }
-            if(whitePieceCount == 2 && blackPieceCount == 2)
+            if (whitePieceCount == 2 && blackPieceCount == 2)
             {
                 ulong allOrthogonalSliders = toMove.orthogonalSliders | toStay.orthogonalSliders;
                 ulong allPawns = toMove.pawns | toStay.pawns;
@@ -54,12 +55,7 @@ namespace Chess.Brain
             }
 
             uint halfMoves = Board.currentGameState >> 14;
-            if (halfMoves >= 50)
-            {
-                return GameState.DRAW_BY_HALFMOVES;
-            }
-
-            return GameState.ONGOING;
+            return halfMoves >= 50 ? GameState.DRAW_BY_HALFMOVES : GameState.ONGOING;
         }
     }
 

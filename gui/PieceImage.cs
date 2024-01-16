@@ -46,7 +46,7 @@ namespace Chess.gui
 
             bitmap.UriSource = new Uri(image_path, UriKind.Relative);
             bitmap.EndInit();
-            this.Source = bitmap;
+            Source = bitmap;
         }
     }
 
@@ -82,8 +82,6 @@ namespace Chess.gui
         {
             if (e.ChangedButton == MouseButton.Left && !PromotionMenu.isOpened && !isLocked)
             {
-                uint color = Piece.GetColor(piece);
-
                 availableMoves = GetAvailableMoves();
                 isDragging = true;
 

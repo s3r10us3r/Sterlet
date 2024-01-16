@@ -63,8 +63,8 @@ namespace Chess.gui
                 }
             }
 
-            this.HorizontalAlignment = HorizontalAlignment.Center;
-            this.VerticalAlignment = VerticalAlignment.Center;
+            HorizontalAlignment = HorizontalAlignment.Center;
+            VerticalAlignment = VerticalAlignment.Center;
 
             GameSingleton.chessBoard = this;
             SetUpFromBoard();
@@ -100,27 +100,31 @@ namespace Chess.gui
 
         private void AddRow()
         {
-            RowDefinition row = new RowDefinition();
-            row.Height = new GridLength(FIELDSIZE);
-            this.RowDefinitions.Add(row);
+            RowDefinition row = new RowDefinition
+            {
+                Height = new GridLength(FIELDSIZE)
+            };
+            RowDefinitions.Add(row);
         }
 
         private void AddColumn()
         {
             ColumnDefinition column = new ColumnDefinition();
             column.Width = new GridLength(FIELDSIZE);
-            this.ColumnDefinitions.Add(column);
+            ColumnDefinitions.Add(column);
         }
 
         private void AddField(int row, int col)
         {
-            Border field = new Border();
-            field.Background = (row + col) % 2 == 0 ? WHITE_FIELDS_COLOR : BLACK_FIELDS_COLOR;
-            field.Width = FIELDSIZE;
-            field.Height = FIELDSIZE;
+            Border field = new Border
+            {
+                Background = (row + col) % 2 == 0 ? WHITE_FIELDS_COLOR : BLACK_FIELDS_COLOR,
+                Width = FIELDSIZE,
+                Height = FIELDSIZE
+            };
             SetRow(field, row);
             SetColumn(field, col);
-            this.Children.Add(field);
+            Children.Add(field);
             fieldArray[row, col] = field;
         }
         private void SetUpFromBoard()
@@ -138,7 +142,10 @@ namespace Chess.gui
         public void MovePieceOnBoard(int oldField, int newField)
         {
             if (blocked)
+            {
                 return;
+            }
+
             PieceImage piece = boardArray[oldField];
             boardArray[oldField] = null;
             boardArray[newField] = piece;
@@ -153,7 +160,9 @@ namespace Chess.gui
         public void RemovePieceFromBoard(int field)
         {
             if (blocked)
+            {
                 return;
+            }
 
             PieceImage piece = boardArray[field];
             boardArray[field] = null;
@@ -166,13 +175,15 @@ namespace Chess.gui
             {
                 blackPlayer.RemovePiece(piece);
             }
-            this.Children.Remove(piece);
+            Children.Remove(piece);
         }
 
         public void AddPieceToBoard(int field, uint newPiece)
         {
             if (blocked)
+            {
                 return;
+            }
 
             PieceImage piece;
             if (Piece.GetColor(newPiece) == Piece.BLACK)
@@ -190,7 +201,7 @@ namespace Chess.gui
             SetRow(piece, row);
             SetColumn(piece, col);
 
-            this.Children.Add(piece);
+            Children.Add(piece);
         }
 
         public static int RowColToFieldNumber(int row, int col)
@@ -221,7 +232,9 @@ namespace Chess.gui
         public void HighlightFields(List<int> fields)
         {
             if (blocked)
+            {
                 return;
+            }
 
             foreach (int field in fields)
             {
@@ -361,9 +374,8 @@ namespace Chess.gui
                 }
             });
             HighlightLastMove(move);
-            if (player is Sterlet)
+            if (player is Sterlet sterlet)
             {
-                Sterlet sterlet = (Sterlet) player;
                 Game game = Game.game;
                 game.UpdateDiagnostics(sterlet.SearchResults);
             }

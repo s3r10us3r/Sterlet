@@ -1,5 +1,4 @@
-﻿using Chess.BitMagic;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -50,6 +49,7 @@ namespace Chess.Logic
         public static PieceList whitePieces;
         public static PieceList blackPieces;
 
+        //see https://www.chessprogramming.org/Zobrist_Hashing
         public static ulong hash;
         public static ulong attackMap;
 
@@ -341,7 +341,7 @@ namespace Chess.Logic
                 repetitionTable[hash] += 1;
             }
             ChangeSides();
-            attackMap = AttackMapper.MapAttacks(toMove, toMove == Piece.WHITE ? whitePieces : blackPieces, toMove == Piece.WHITE ? blackPieces : whitePieces);
+            attackMap = AttackMapper.MapAttacks(toMove, toStay == Piece.WHITE ? whitePieces : blackPieces, toStay == Piece.WHITE ? blackPieces : whitePieces);
 
         }
 
@@ -578,7 +578,7 @@ namespace Chess.Logic
                             fenString += emptyCount.ToString();
                             emptyCount = 0;
                         }
-                        fenString += getPieceString(board[field]);
+                        fenString += GetPieceString(board[field]);
                     }
                     else
                     {
@@ -594,14 +594,20 @@ namespace Chess.Logic
                     fenString += "8";
                 }
                 if (row != 0)
+                {
                     fenString += "/";
+                }
             }
 
             fenString += " ";
             if (toMove == Piece.WHITE)
+            {
                 fenString += "w";
+            }
             else
+            {
                 fenString += "b";
+            }
 
             fenString += " ";
 
@@ -626,7 +632,7 @@ namespace Chess.Logic
                 fenString += "q";
                 castleAvailable = true;
             }
-            if(!castleAvailable)
+            if (!castleAvailable)
             {
                 fenString += "-";
             }
@@ -654,11 +660,11 @@ namespace Chess.Logic
             return fenString;
         }
 
-        private static string getPieceString(uint piece)
+        private static string GetPieceString(uint piece)
         {
             string pieceString = "";
             uint pieceType = Piece.GetPiece(piece);
-            switch(pieceType)
+            switch (pieceType)
             {
                 case Piece.PAWN:
                     pieceString = "p";

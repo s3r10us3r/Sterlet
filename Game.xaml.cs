@@ -13,14 +13,14 @@ namespace Chess
     public partial class Game : Page
     {
         private readonly ChessBoard chessBoard;
-        private bool engineDebugging = true;
+        private const bool DEBUGGING_ON = true;
         public static Game game;
 
         public Game(string FEN, PlayerType whitePlayerType, PlayerType blackPlayerType, TimerOptions timerOptions)
         {
             InitializeComponent();
 
-            if ( !engineDebugging )
+            if ( !DEBUGGING_ON )
             {
                 enigneAnalysis.Visibility = Visibility.Hidden;
             }
@@ -71,7 +71,9 @@ namespace Chess
         public void UpdateDiagnostics(SearchResults searchResults)
         {
             if (searchResults != null)
+            {
                 enigneAnalysis.Text = $"Depth = {searchResults.depthSearched} Eval = {searchResults.eval}  NaiveEval = {searchResults.naiveEval}";
+            }
         }
     }
 }
